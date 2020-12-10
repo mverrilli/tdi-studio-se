@@ -65,7 +65,7 @@ public enum ColorInfo {
 
     private int blue;
 
-    private int alpha;
+    private int alpha = 255;
 
     private int systemColor = -1;
 
