@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
 import java.lang.ref.SoftReference;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -30,8 +31,8 @@ import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IPath;
@@ -58,6 +59,7 @@ import org.talend.commons.ui.runtime.exception.MessageBoxExceptionHandler;
 import org.talend.commons.ui.utils.image.ColorUtils;
 import org.talend.core.CorePlugin;
 import org.talend.core.GlobalServiceRegister;
+import org.talend.core.ILibraryManagerService;
 import org.talend.core.PluginChecker;
 import org.talend.core.language.ECodeLanguage;
 import org.talend.core.language.LanguageManager;
@@ -154,7 +156,9 @@ import org.talend.hadoop.distribution.model.DistributionBean;
 import org.talend.hadoop.distribution.model.DistributionVersion;
 import org.talend.hadoop.distribution.model.DistributionVersionModule;
 import org.talend.hadoop.distribution.utils.ComponentConditionUtil;
+import org.talend.librariesmanager.model.ExtensionModuleManager;
 import org.talend.librariesmanager.model.ModulesNeededProvider;
+import org.talend.librariesmanager.model.service.LibrariesIndexManager;
 import org.talend.librariesmanager.prefs.LibrariesManagerUtils;
 
 /**
@@ -268,6 +272,36 @@ public class EmfComponent extends AbstractBasicComponent {
 
     private AbstractComponentsProvider provider;
 
+    public EmfComponent(String uriString, String bundleId, String name, String pathSource, boolean isload,
+            AbstractComponentsProvider provider) throws BusinessException {
+        this.uriString = uriString;
+        this.name = name;
+        this.pathSource = pathSource;
+        this.bundleName = bundleId;
+        this.isAlreadyLoad = isload;
+        this.provider = provider;
+        if (!isAlreadyLoad) {
+            info = ComponentCacheFactory.eINSTANCE.createComponentInfo();
+            setImportTypes();
+            load();
+            getOriginalFamilyName();
+            getPluginExtension();
+            isTechnical();
+            getVersion();
+            getPluginDependencies();
+            getTranslatedFamilyName();
+            getRepositoryType();
+            getType();
+            getLongName();
+            info.setUriString(uriString);
+            info.setSourceBundleName(bundleId);
+            info.setPathSource(pathSource);
+
+            isAlreadyLoad = true;
+            isLoaded = true;
+        }
+    }
+
     public EmfComponent(String uriString, String bundleId, String name, String pathSource, ComponentsCache cache, boolean isload,
             AbstractComponentsProvider provider) throws BusinessException {
         this.uriString = uriString;
@@ -278,10 +312,10 @@ public class EmfComponent extends AbstractBasicComponent {
         this.provider = provider;
         if (!isAlreadyLoad) {
             info = ComponentCacheFactory.eINSTANCE.createComponentInfo();
+            setImportTypes();
             load();
             getOriginalFamilyName();
             getPluginExtension();
-            getModulesNeeded(null);
             isTechnical();
             getVersion();
             getPluginDependencies();
@@ -3231,6 +3265,15 @@ public class EmfComponent extends AbstractBasicComponent {
         return getModulesNeeded(null);
     }
 
+    private void setImportTypes() {
+        IMPORTSType imports = compType.getCODEGENERATION().getIMPORTS();
+        List<IMPORTType> importTypes = new ArrayList<IMPORTType>();
+        if (imports != null) {
+            importTypes.addAll(ImportModuleManager.getInstance().getImportTypes(imports));
+            info.getImportType().addAll(importTypes);
+        }
+    }
+
     @Override
     public List<ModuleNeeded> getModulesNeeded(INode node) {
         if (componentImportNeedsList != null && componentImportNeedsList.size() > 0) {
@@ -3247,13 +3290,11 @@ public class EmfComponent extends AbstractBasicComponent {
         List<String> moduleNames = new ArrayList<String>();
         if (!isAlreadyLoad) {
             IMPORTSType imports = compType.getCODEGENERATION().getIMPORTS();
-            List<IMPORTType> importTypes = new ArrayList<IMPORTType>();
+            List<IMPORTType> importTypes = info.getImportType();
             if (imports != null) {
-                importTypes.addAll(ImportModuleManager.getInstance().getImportTypes(imports));
                 for (IMPORTType importType : importTypes) {
                     ModulesNeededProvider.collectModuleNeeded(this.getName(), importType, componentImportNeedsList);
                 }
-                info.getImportType().addAll(importTypes);
                 List<String> componentList = info.getComponentNames();
                 for (IMultipleComponentManager multipleComponentManager : getMultipleComponentManagers()) {
                     for (IMultipleComponentItem multipleComponentItem : multipleComponentManager.getItemList()) {
@@ -3393,6 +3434,58 @@ public class EmfComponent extends AbstractBasicComponent {
             areHadoopLibsImported = true;
             componentImportNeedsList.addAll(componentHadoopDistributionImportNeedsList);
         }
+        
+        // check and install
+        ILibraryManagerService librairesManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
+                ILibraryManagerService.class);
+        if(librairesManagerService == null){
+            return null;
+        }
+        componentImportNeedsList.forEach(m->{
+            LibrariesIndexManager.getInstance().AddMavenLibs(m.getModuleName(), m.getMavenUri());
+            String urlPath = m.getModuleLocaion();
+            String absolutePath = null;
+            if (!StringUtils.isEmpty(urlPath) && urlPath.startsWith(ExtensionModuleManager.URIPATH_PREFIX)) {
+                try {
+                    String plugin = urlPath.substring(17);
+                    plugin = plugin.substring(0, plugin.indexOf("/"));
+                    String path = urlPath.substring(17 + plugin.length());
+                    URL url = FileLocator.find(Platform.getBundle(plugin), new Path(path), null);
+                    if (url != null) {
+                        URL url2 = FileLocator.toFileURL(url);
+                        File file = new File(url2.getFile());
+                        if (file.exists()) {
+                            absolutePath = file.getAbsolutePath();
+                        }
+                    }
+                } catch (Exception e) {
+                    // do nothing
+                }
+
+                if (absolutePath==null) {
+                    try {
+                        java.net.URI uri = new java.net.URI(urlPath);
+                        URL url = FileLocator.toFileURL(uri.toURL());
+                        File file = new File(url.getFile());
+                        if (file.exists()) {
+                            absolutePath = file.getAbsolutePath();
+                        }
+                    } catch (Exception e) {
+                        // do nothing
+                    }
+                }
+                if (absolutePath != null) {
+                    LibrariesIndexManager.getInstance().AddStudioLibs(m.getModuleName(), m.getModuleLocaion());
+                    try {
+                        librairesManagerService.deploy(new java.net.URI(absolutePath), null, false);
+                    } catch (Exception e) {
+                        // do nothing
+                    }
+                } else {
+                    m.setModuleLocaion(null);
+                }
+            }
+        });
 
         return componentImportNeedsList;
     }

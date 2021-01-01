@@ -305,7 +305,7 @@ public class ComponentsFactory implements IComponentsFactory {
      * @return
      * @throws IOException
      */
-    private ComponentsCache loadComponentResource(String installLocation) throws IOException {
+    public static ComponentsCache loadComponentResource(String installLocation) throws IOException {
         String filePath = ComponentsFactory.TALEND_COMPONENT_CACHE + LanguageManager.getCurrentLanguage().toString().toLowerCase()
                 + ComponentsFactory.TALEND_FILE_NAME;
         URI uri = URI.createFileURI(installLocation).appendSegment(filePath);
@@ -744,15 +744,19 @@ public class ComponentsFactory implements IComponentsFactory {
      */
     @Override
     public IComponent get(String name, String paletteType) {
-        wait4InitialiseFinish();
-        if (componentList == null) {
-            init(false);
-        }
+        IComponent retcomp = ComponentsLoader.getInstance().loadComponentFromIndex(name, paletteType);
+        if (retcomp == null) {
+            log.info("ComponentsLoader can not load name: " + name + ", type: " + paletteType + " from index");
+            wait4InitialiseFinish();
+            if (componentList == null) {
+                init(false);
+            }
 
-        for (IComponent comp : componentList) {
-            if (comp != null && comp.getName().equals(name) && paletteType.equals(comp.getPaletteType())) {
-                return comp;
-            } // else keep looking
+            for (IComponent comp : componentList) {
+                if (comp != null && comp.getName().equals(name) && paletteType.equals(comp.getPaletteType())) {
+                    return comp;
+                } // else keep looking
+            }
         }
         return null;
     }
