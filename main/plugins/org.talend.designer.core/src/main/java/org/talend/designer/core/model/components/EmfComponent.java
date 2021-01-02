@@ -282,8 +282,8 @@ public class EmfComponent extends AbstractBasicComponent {
         this.provider = provider;
         if (!isAlreadyLoad) {
             info = ComponentCacheFactory.eINSTANCE.createComponentInfo();
-            setImportTypes();
             load();
+            setImportTypes();
             getOriginalFamilyName();
             getPluginExtension();
             isTechnical();
@@ -296,6 +296,7 @@ public class EmfComponent extends AbstractBasicComponent {
             info.setUriString(uriString);
             info.setSourceBundleName(bundleId);
             info.setPathSource(pathSource);
+            info.setProviderClass(provider.getClass().getCanonicalName());
 
             isAlreadyLoad = true;
             isLoaded = true;
@@ -312,8 +313,8 @@ public class EmfComponent extends AbstractBasicComponent {
         this.provider = provider;
         if (!isAlreadyLoad) {
             info = ComponentCacheFactory.eINSTANCE.createComponentInfo();
-            setImportTypes();
             load();
+            setImportTypes();
             getOriginalFamilyName();
             getPluginExtension();
             isTechnical();
@@ -326,6 +327,7 @@ public class EmfComponent extends AbstractBasicComponent {
             info.setUriString(uriString);
             info.setSourceBundleName(bundleId);
             info.setPathSource(pathSource);
+            info.setProviderClass(provider.getClass().getCanonicalName());
 
             if (!cache.getComponentEntryMap().containsKey(getName())) {
                 cache.getComponentEntryMap().put(getName(), new BasicEList<ComponentInfo>());

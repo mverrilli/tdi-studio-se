@@ -181,34 +181,34 @@ public class ComponentsFactory implements IComponentsFactory {
             boolean isNeedClean = !cleanDone && TalendCacheUtils.isSetCleanComponentCache();
             cleanDone = true; // only check this parameter one time, or it will reinitialize things all the time...
             isCreated = hasComponentFile(installLocation) && !isNeedClean;
-            ComponentsCache cache = ComponentManager.getComponentCache();
-            try {
-                if (isCreated) {
-                    // if cache is created and empty, means we never loaded it before.
-                    // if it was already loaded, then no need to go again, since it's a static variable, it's still in
-                    // memory.
-                    // it avoids to reload from disk again even more for commandline at each logon, since it's no use.
-                    if (cache.getComponentEntryMap().isEmpty()) {
-                        ComponentsCache loadCache = loadComponentResource(installLocation);
-                        cache.getComponentEntryMap().putAll(loadCache.getComponentEntryMap());
-                    }
-                } else {
-                    cache.getComponentEntryMap().clear();
-                }
-            } catch (IOException e) {
-                ExceptionHandler.process(e);
-                cache.getComponentEntryMap().clear();
-                isCreated = false;
-            }
+            // ComponentsCache cache = ComponentManager.getComponentCache();
+            // try {
+            // if (isCreated) {
+            // // if cache is created and empty, means we never loaded it before.
+            // // if it was already loaded, then no need to go again, since it's a static variable, it's still in
+            // // memory.
+            // // it avoids to reload from disk again even more for commandline at each logon, since it's no use.
+            // if (cache.getComponentEntryMap().isEmpty()) {
+            // ComponentsCache loadCache = loadComponentResource(installLocation);
+            // cache.getComponentEntryMap().putAll(loadCache.getComponentEntryMap());
+            // }
+            // } else {
+            // cache.getComponentEntryMap().clear();
+            // }
+            // } catch (IOException e) {
+            // ExceptionHandler.process(e);
+            // cache.getComponentEntryMap().clear();
+            // isCreated = false;
+            // }
 
-            loadComponentsFromComponentsProviderExtension();
+            // loadComponentsFromComponentsProviderExtension();
 
             // TimeMeasure.step("initComponents", "loadComponentsFromProvider");
             // 2.Load Component from extension point: component_definition
             loadComponentsFromExtensions();
             // TimeMeasure.step("initComponents", "loadComponentsFromExtension[joblets?]");
 
-            ComponentManager.saveResource(); // will save only if needed.
+            // ComponentManager.saveResource(); // will save only if needed.
 
             // init component name map, used to pick specified component immediately
             initComponentNameMap();
@@ -744,21 +744,25 @@ public class ComponentsFactory implements IComponentsFactory {
      */
     @Override
     public IComponent get(String name, String paletteType) {
+        wait4InitialiseFinish();
+        if (componentList == null) {
+            init(false);
+        }
+
+        for (IComponent comp : componentList) {
+            if (comp != null && comp.getName().equals(name) && paletteType.equals(comp.getPaletteType())) {
+                return comp;
+            }
+        }
+
         IComponent retcomp = ComponentsLoader.getInstance().loadComponentFromIndex(name, paletteType);
         if (retcomp == null) {
             log.info("ComponentsLoader can not load name: " + name + ", type: " + paletteType + " from index");
-            wait4InitialiseFinish();
-            if (componentList == null) {
-                init(false);
-            }
-
-            for (IComponent comp : componentList) {
-                if (comp != null && comp.getName().equals(name) && paletteType.equals(comp.getPaletteType())) {
-                    return comp;
-                } // else keep looking
-            }
+        } else {
+            log.info("ComponentsLoader loaded name: " + name + ", type: " + paletteType + " from index");
+            componentList.add(retcomp);
         }
-        return null;
+        return retcomp;
     }
 
     @Override

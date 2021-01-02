@@ -64,50 +64,28 @@ public class ComponentsLoader {
         } catch (IOException e) {
             ExceptionHandler.process(e);
         }
-
-        if (cacheFromFile == null) {
-            return;
-        }
     }
 
     private void loadComponentProviders() {
-        BundleContext context = null;
-        if (Platform.getProduct() != null) {
-            final Bundle definingBundle = Platform.getProduct().getDefiningBundle();
-            if (definingBundle != null) {
-                context = definingBundle.getBundleContext();
-            }
-        }
-        if (context == null) {
-            context = CodeGeneratorActivator.getDefault().getBundle().getBundleContext();
-        }
-        ServiceReference sref = context.getServiceReference(PackageAdmin.class.getName());
-        PackageAdmin admin = (PackageAdmin) context.getService(sref);
-
         ComponentsProviderManager componentsProviderManager = ComponentsProviderManager.getInstance();
         componentsProviderManager.getProviders().forEach(e -> {
-            String bundleName;
-            if (!e.isCustom()) {
-                bundleName = admin.getBundle(e.getClass()).getSymbolicName();
-            } else if (e.getComponentsBundle() == null) {
-                bundleName = IComponentsFactory.COMPONENTS_LOCATION;
-            } else {
-                bundleName = e.getComponentsBundle();
-            }
-            providers.put(bundleName, e);
+            providers.put(e.getClass().getCanonicalName(), e);
         });
     }
 
     public IComponent loadComponentFromIndex(String name, String type) {
         EmfComponent comp = null;
-
+        if (cacheFromFile == null) {
+            return comp;
+        }
         EList<ComponentInfo> cis = cacheFromFile.getComponentEntryMap().get(name);
         if (cis != null) {
             for (ComponentInfo ci : cis) {
                 if (StringUtils.equals(ci.getType(), type)) {
-                    AbstractComponentsProvider provider = providers.get(ci.getSourceBundleName());
+                    AbstractComponentsProvider provider = providers.get(ci.getProviderClass());
                     try {
-                        comp = new EmfComponent(ci.getUriString(), ci.getSourceBundleName(), name, ci.getPathSource(), false,
+                        return comp = new EmfComponent(ci.getUriString(), ci.getSourceBundleName(), name, ci.getPathSource(),
+                                false,
                                 provider);
                     } catch (BusinessException e) {
                         ExceptionHandler.process(e);
@@ -115,6 +93,6 @@ public class ComponentsLoader {
                 }
             }
         }
-        return comp;
+        return null;
     }
 }
