@@ -2,6 +2,7 @@ package org.talend.designer.business.model.business.diagram.edit.policies;
 
 import org.eclipse.emf.transaction.TransactionalEditingDomain;
 import org.eclipse.gef.EditPart;
+import org.eclipse.gef.GraphicalEditPart;
 import org.eclipse.gef.Request;
 import org.eclipse.gef.commands.Command;
 import org.eclipse.gef.commands.CompoundCommand;
@@ -11,10 +12,7 @@ import org.eclipse.gef.editpolicies.ConnectionEditPolicy;
 import org.eclipse.gef.requests.GroupRequest;
 import org.eclipse.gmf.runtime.diagram.core.commands.DeleteCommand;
 import org.eclipse.gmf.runtime.diagram.ui.commands.ICommandProxy;
-import org.eclipse.gmf.runtime.diagram.ui.editparts.GraphicalEditPart;
 import org.eclipse.gmf.runtime.diagram.ui.editparts.IGraphicalEditPart;
-import org.eclipse.gmf.runtime.diagram.ui.l10n.DiagramUIMessages;
-import org.eclipse.gmf.runtime.diagram.ui.preferences.IPreferenceConstants;
 import org.eclipse.gmf.runtime.diagram.ui.requests.EditCommandRequestWrapper;
 import org.eclipse.gmf.runtime.diagram.ui.requests.GroupRequestViaKeyboard;
 import org.eclipse.gmf.runtime.emf.type.core.requests.DestroyElementRequest;
@@ -22,8 +20,9 @@ import org.eclipse.gmf.runtime.notation.View;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialogWithToggle;
 import org.eclipse.jface.preference.IPreferenceStore;
-import org.eclipse.jface.util.Assert;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.internal.IPreferenceConstants;
+import org.talend.commons.ui.gmf.util.DiagramUIMessages;
 
 /**
  * @generated
