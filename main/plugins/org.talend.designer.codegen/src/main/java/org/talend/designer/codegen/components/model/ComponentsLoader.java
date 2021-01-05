@@ -14,25 +14,20 @@ package org.talend.designer.codegen.components.model;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.emf.common.util.EList;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
-import org.osgi.service.packageadmin.PackageAdmin;
-import org.talend.commons.exception.BusinessException;
 import org.talend.commons.exception.ExceptionHandler;
 import org.talend.core.model.component_cache.ComponentInfo;
 import org.talend.core.model.component_cache.ComponentsCache;
 import org.talend.core.model.components.AbstractComponentsProvider;
 import org.talend.core.model.components.IComponent;
-import org.talend.core.model.components.IComponentsFactory;
-import org.talend.designer.codegen.CodeGeneratorActivator;
 import org.talend.designer.core.model.components.EmfComponent;
 
 /*
@@ -73,26 +68,25 @@ public class ComponentsLoader {
         });
     }
 
-    public IComponent loadComponentFromIndex(String name, String type) {
-        EmfComponent comp = null;
+    public Set<IComponent> loadAllComponentsFromIndex() {
+        Set<IComponent> retSet = new HashSet<IComponent>();
         if (cacheFromFile == null) {
-            return comp;
+            return retSet;
         }
-        EList<ComponentInfo> cis = cacheFromFile.getComponentEntryMap().get(name);
-        if (cis != null) {
-            for (ComponentInfo ci : cis) {
-                if (StringUtils.equals(ci.getType(), type)) {
-                    AbstractComponentsProvider provider = providers.get(ci.getProviderClass());
-                    try {
-                        return comp = new EmfComponent(ci.getUriString(), ci.getSourceBundleName(), name, ci.getPathSource(),
-                                false,
-                                provider);
-                    } catch (BusinessException e) {
-                        ExceptionHandler.process(e);
-                    }
+        Set<Entry<String, EList<ComponentInfo>>> entries = cacheFromFile.getComponentEntryMap().entrySet();
+        for (Entry<String, EList<ComponentInfo>> entry : entries) {
+            for (ComponentInfo ci : entry.getValue()) {
+                AbstractComponentsProvider provider = providers.get(ci.getProviderClass());
+                try {
+                    IComponent comp = new EmfComponent(ci.getUriString(), ci.getSourceBundleName(), entry.getKey(),
+                            ci.getPathSource(),
+                            false, provider);
+                    retSet.add(comp);
+                } catch (Exception e) {
+                    ExceptionHandler.process(e);
                 }
             }
         }
-        return null;
+        return retSet;
     }
 }

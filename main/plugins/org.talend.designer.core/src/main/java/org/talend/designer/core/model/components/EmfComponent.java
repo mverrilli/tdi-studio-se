@@ -3437,11 +3437,17 @@ public class EmfComponent extends AbstractBasicComponent {
             componentImportNeedsList.addAll(componentHadoopDistributionImportNeedsList);
         }
         
+        installLibs();
+
+        return componentImportNeedsList;
+    }
+
+    private void installLibs() {
         // check and install
         ILibraryManagerService librairesManagerService = (ILibraryManagerService) GlobalServiceRegister.getDefault().getService(
                 ILibraryManagerService.class);
         if(librairesManagerService == null){
-            return null;
+            return;
         }
         componentImportNeedsList.forEach(m->{
             LibrariesIndexManager.getInstance().AddMavenLibs(m.getModuleName(), m.getMavenUri());
@@ -3488,8 +3494,6 @@ public class EmfComponent extends AbstractBasicComponent {
                 }
             }
         });
-
-        return componentImportNeedsList;
     }
     
     private boolean isRequired(List<IMPORTType> importTypes, String valueIndex) {
@@ -4487,6 +4491,17 @@ public class EmfComponent extends AbstractBasicComponent {
             }
         }
         return super.isActiveDbColumns();
+    }
+
+    public boolean isExtComponentProvider() {
+        String providerId = this.provider.getId();
+        if ("org.talend.designer.components.model.UserComponentsProvider".equals(providerId)
+                || "org.talend.designer.codegen.components.model.SharedStudioUserComponentProvider".equals(providerId)
+                || "org.talend.designer.components.exchange.ExchangeComponentsProvider".equals(providerId)
+                || "org.talend.designer.components.exchange.SharedStudioExchangeComponentsProvider".equals(providerId)) {
+            return true;
+        }
+        return false;
     }
 
 }

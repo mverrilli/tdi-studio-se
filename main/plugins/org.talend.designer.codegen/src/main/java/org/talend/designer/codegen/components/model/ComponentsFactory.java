@@ -133,11 +133,9 @@ public class ComponentsFactory implements IComponentsFactory {
 
     private static final String INCLUDEFILEINJET_SUFFIX = ".inc.javajet"; //$NON-NLS-1$
 
-    private boolean isCreated = false;
+    private boolean reGenerateIndex = false;
 
     private IComponentsHandler componentsHandler;// Added by Marvin Wang on Jan. 11, 2012 for M/R.
-
-    private static boolean cleanDone = false;
 
     protected static Map<String, Map<String, Set<IComponent>>> componentNameMap;
 
@@ -178,38 +176,24 @@ public class ComponentsFactory implements IComponentsFactory {
             userComponentList = new HashSet<IComponent>();
             String installLocation = new Path(Platform.getConfigurationLocation().getURL().getPath()).toFile().getAbsolutePath();
             componentToProviderMap = new HashMap<IComponent, AbstractComponentsProvider>();
-            boolean isNeedClean = !cleanDone && TalendCacheUtils.isSetCleanComponentCache();
-            cleanDone = true; // only check this parameter one time, or it will reinitialize things all the time...
-            isCreated = hasComponentFile(installLocation) && !isNeedClean;
-            // ComponentsCache cache = ComponentManager.getComponentCache();
-            // try {
-            // if (isCreated) {
-            // // if cache is created and empty, means we never loaded it before.
-            // // if it was already loaded, then no need to go again, since it's a static variable, it's still in
-            // // memory.
-            // // it avoids to reload from disk again even more for commandline at each logon, since it's no use.
-            // if (cache.getComponentEntryMap().isEmpty()) {
-            // ComponentsCache loadCache = loadComponentResource(installLocation);
-            // cache.getComponentEntryMap().putAll(loadCache.getComponentEntryMap());
-            // }
-            // } else {
-            // cache.getComponentEntryMap().clear();
-            // }
-            // } catch (IOException e) {
-            // ExceptionHandler.process(e);
-            // cache.getComponentEntryMap().clear();
-            // isCreated = false;
-            // }
+            boolean isNeedClean = TalendCacheUtils.isSetCleanComponentCache();
+            // if there is no index file or -clean is added to command
+            reGenerateIndex = !hasComponentFile(installLocation) || isNeedClean;
+            if (reGenerateIndex) {
+                ComponentsCache cache = ComponentManager.getComponentCache();
+                try {
+                    cache.getComponentEntryMap().clear();
+                    loadComponentsFromComponentsProviderExtension();
+                    ComponentManager.saveResource();
+                } catch (Exception e) {
+                    ExceptionHandler.process(e);
+                }
+            }
 
-            // loadComponentsFromComponentsProviderExtension();
-
-            // TimeMeasure.step("initComponents", "loadComponentsFromProvider");
-            // 2.Load Component from extension point: component_definition
             loadComponentsFromExtensions();
-            // TimeMeasure.step("initComponents", "loadComponentsFromExtension[joblets?]");
 
-            // ComponentManager.saveResource(); // will save only if needed.
-
+            Set<IComponent> javajetComponents = ComponentsLoader.getInstance().loadAllComponentsFromIndex();
+            componentList.addAll(javajetComponents);
             // init component name map, used to pick specified component immediately
             initComponentNameMap();
 
@@ -408,6 +392,7 @@ public class ComponentsFactory implements IComponentsFactory {
     }
 
     private void loadComponentsFromFolder(String pathSource, AbstractComponentsProvider provider) {
+
         boolean isCustom = provider.isCustom();
 
         File source;
@@ -755,14 +740,9 @@ public class ComponentsFactory implements IComponentsFactory {
             }
         }
 
-        IComponent retcomp = ComponentsLoader.getInstance().loadComponentFromIndex(name, paletteType);
-        if (retcomp == null) {
-            log.info("ComponentsLoader can not load name: " + name + ", type: " + paletteType + " from index");
-        } else {
-            log.info("ComponentsLoader loaded name: " + name + ", type: " + paletteType + " from index");
-            componentList.add(retcomp);
-        }
-        return retcomp;
+        log.warn("ComponentsLoader can not load name: " + name + ", type: " + paletteType + " from index");
+
+        return null;
     }
 
     @Override
