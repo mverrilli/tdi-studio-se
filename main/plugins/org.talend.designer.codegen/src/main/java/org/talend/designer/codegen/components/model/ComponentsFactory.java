@@ -740,8 +740,6 @@ public class ComponentsFactory implements IComponentsFactory {
             }
         }
 
-        log.warn("ComponentsLoader can not load name: " + name + ", type: " + paletteType + " from index");
-
         return null;
     }
 

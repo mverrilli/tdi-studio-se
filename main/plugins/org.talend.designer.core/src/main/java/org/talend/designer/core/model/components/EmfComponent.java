@@ -272,35 +272,14 @@ public class EmfComponent extends AbstractBasicComponent {
 
     private AbstractComponentsProvider provider;
 
-    public EmfComponent(String uriString, String bundleId, String name, String pathSource, boolean isload,
+    public EmfComponent(String name, ComponentInfo ci,
             AbstractComponentsProvider provider) throws BusinessException {
-        this.uriString = uriString;
+        this.uriString = ci.getUriString();
         this.name = name;
-        this.pathSource = pathSource;
-        this.bundleName = bundleId;
-        this.isAlreadyLoad = isload;
+        this.pathSource = ci.getPathSource();
+        this.bundleName = ci.getSourceBundleName();
         this.provider = provider;
-        if (!isAlreadyLoad) {
-            info = ComponentCacheFactory.eINSTANCE.createComponentInfo();
-            load();
-            setImportTypes();
-            getOriginalFamilyName();
-            getPluginExtension();
-            isTechnical();
-            getVersion();
-            getPluginDependencies();
-            getTranslatedFamilyName();
-            getRepositoryType();
-            getType();
-            getLongName();
-            info.setUriString(uriString);
-            info.setSourceBundleName(bundleId);
-            info.setPathSource(pathSource);
-            info.setProviderClass(provider.getClass().getCanonicalName());
-
-            isAlreadyLoad = true;
-            isLoaded = true;
-        }
+        this.info = ci;
     }
 
     public EmfComponent(String uriString, String bundleId, String name, String pathSource, ComponentsCache cache, boolean isload,
@@ -362,6 +341,14 @@ public class EmfComponent extends AbstractBasicComponent {
     }
 
     public COMPONENTType getEmfComponentType() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         return compType;
     }
 
@@ -415,7 +402,7 @@ public class EmfComponent extends AbstractBasicComponent {
                         .getClass().getClassLoader()));
                 return bundle;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             ExceptionHandler.process(e);
         }
 
@@ -592,6 +579,14 @@ public class EmfComponent extends AbstractBasicComponent {
 
     @Override
     public List<NodeReturn> createReturns(INode parentNode) {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         List<NodeReturn> listReturn;
         RETURNType retType;
         EList returnList;
@@ -2771,6 +2766,14 @@ public class EmfComponent extends AbstractBasicComponent {
 
     @Override
     public String getOriginalFamilyName() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         if (familyName != null) {
             return familyName;
         }
@@ -2806,6 +2809,15 @@ public class EmfComponent extends AbstractBasicComponent {
     public String getTranslatedFamilyName() {
         if (newTranslatedFamilyName != null) {
             return newTranslatedFamilyName;
+        }
+
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
         }
 
         if (!isAlreadyLoad) {
@@ -3148,6 +3160,14 @@ public class EmfComponent extends AbstractBasicComponent {
 
     @Override
     public String getPluginExtension() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         // String componentsPath = IComponentsFactory.COMPONENTS_LOCATION;
         // IBrandingService breaningService = (IBrandingService) GlobalServiceRegister.getDefault().getService(
         // IBrandingService.class);
@@ -3222,6 +3242,15 @@ public class EmfComponent extends AbstractBasicComponent {
             return visibleFromComponentDefinition;
         }
 
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
+
         if (compType != null) {
             boolean isVisible = compType.getHEADER().isVISIBLE();
             info.setIsVisibleInComponentDefinition(isVisible);
@@ -3240,6 +3269,14 @@ public class EmfComponent extends AbstractBasicComponent {
     public String getVersion() {
         String version = ""; //$NON-NLS-1$
         if (!isAlreadyLoad) {
+            if (compType == null) {
+                isLoaded = false;
+                try {
+                    load();
+                } catch (BusinessException e) {
+                    ExceptionHandler.process(e);
+                }
+            }
             version = String.valueOf(compType.getHEADER().getVERSION());
             info.setVersion(version);
         } else {
@@ -3267,7 +3304,8 @@ public class EmfComponent extends AbstractBasicComponent {
         return getModulesNeeded(null);
     }
 
-    private void setImportTypes() {
+    private void setImportTypes() throws BusinessException {
+        load();
         IMPORTSType imports = compType.getCODEGENERATION().getIMPORTS();
         List<IMPORTType> importTypes = new ArrayList<IMPORTType>();
         if (imports != null) {
@@ -3278,6 +3316,14 @@ public class EmfComponent extends AbstractBasicComponent {
 
     @Override
     public List<ModuleNeeded> getModulesNeeded(INode node) {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         if (componentImportNeedsList != null && componentImportNeedsList.size() > 0) {
             if (areHadoopDistribsLoaded && !areHadoopDistribsImported) {
                 areHadoopDistribsImported = true;
@@ -3781,6 +3827,14 @@ public class EmfComponent extends AbstractBasicComponent {
     @Override
     @SuppressWarnings("unchecked")
     public List<String> getPluginDependencies() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         List<String> pluginDependencyList = new ArrayList<String>();
         if (!isAlreadyLoad) {
             if (this.compType.getPLUGINDEPENDENCIES() != null) {
@@ -4084,6 +4138,14 @@ public class EmfComponent extends AbstractBasicComponent {
                 info.setIsTechnical(technical);
                 return technical;
             }
+            if (compType == null) {
+                isLoaded = false;
+                try {
+                    load();
+                } catch (BusinessException e) {
+                    ExceptionHandler.process(e);
+                }
+            }
             info.setIsTechnical(compType.getHEADER().isTECHNICAL());
             isTrchnical = compType.getHEADER().isTECHNICAL();
         } else {
@@ -4295,6 +4357,14 @@ public class EmfComponent extends AbstractBasicComponent {
      */
     @Override
     public String getInputType() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         return compType.getHEADER().getINPUTTYPE();
     }
 
@@ -4305,6 +4375,14 @@ public class EmfComponent extends AbstractBasicComponent {
      */
     @Override
     public String getOutputType() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         return compType.getHEADER().getOUTPUTTYPE();
     }
 
@@ -4315,6 +4393,14 @@ public class EmfComponent extends AbstractBasicComponent {
      */
     @Override
     public boolean isReduce() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         return compType.getHEADER().isREDUCE();
     }
 
@@ -4325,6 +4411,14 @@ public class EmfComponent extends AbstractBasicComponent {
      */
     @Override
     public boolean isSparkAction() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         return compType.getHEADER().isSPARKACTION();
     }
 
@@ -4348,6 +4442,14 @@ public class EmfComponent extends AbstractBasicComponent {
      */
     @Override
     public String getPartitioning() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         return compType.getHEADER().getPARTITIONING();
     }
 
@@ -4371,6 +4473,14 @@ public class EmfComponent extends AbstractBasicComponent {
 
     @Override
     public boolean isSupportDbType() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         return compType.getHEADER().isSUPPORTS_DB_TYPE();
     }
 
@@ -4484,6 +4594,14 @@ public class EmfComponent extends AbstractBasicComponent {
 
     @Override
     public boolean isActiveDbColumns() {
+        if (compType == null) {
+            isLoaded = false;
+            try {
+                load();
+            } catch (BusinessException e) {
+                ExceptionHandler.process(e);
+            }
+        }
         if (compType != null) {
             HEADERType header = compType.getHEADER();
             if (header != null) {
@@ -4492,16 +4610,4 @@ public class EmfComponent extends AbstractBasicComponent {
         }
         return super.isActiveDbColumns();
     }
-
-    public boolean isExtComponentProvider() {
-        String providerId = this.provider.getId();
-        if ("org.talend.designer.components.model.UserComponentsProvider".equals(providerId)
-                || "org.talend.designer.codegen.components.model.SharedStudioUserComponentProvider".equals(providerId)
-                || "org.talend.designer.components.exchange.ExchangeComponentsProvider".equals(providerId)
-                || "org.talend.designer.components.exchange.SharedStudioExchangeComponentsProvider".equals(providerId)) {
-            return true;
-        }
-        return false;
-    }
-
 }

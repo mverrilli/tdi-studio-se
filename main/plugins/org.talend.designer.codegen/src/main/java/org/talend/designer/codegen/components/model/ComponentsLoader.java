@@ -78,9 +78,8 @@ public class ComponentsLoader {
             for (ComponentInfo ci : entry.getValue()) {
                 AbstractComponentsProvider provider = providers.get(ci.getProviderClass());
                 try {
-                    IComponent comp = new EmfComponent(ci.getUriString(), ci.getSourceBundleName(), entry.getKey(),
-                            ci.getPathSource(),
-                            false, provider);
+                    IComponent comp = new EmfComponent(entry.getKey(), ci, provider);
+                    comp.setPaletteType(ci.getType());
                     retSet.add(comp);
                 } catch (Exception e) {
                     ExceptionHandler.process(e);
