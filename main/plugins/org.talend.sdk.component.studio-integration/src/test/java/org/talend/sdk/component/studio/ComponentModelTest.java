@@ -15,10 +15,11 @@
  */
 package org.talend.sdk.component.studio;
 
-import static java.util.Collections.*;
-import static java.util.Optional.*;
-import static org.apache.ziplock.JarLocation.*;
-import static org.junit.jupiter.api.Assertions.*;
+import static java.util.Collections.emptyList;
+import static java.util.Optional.ofNullable;
+import static org.apache.ziplock.JarLocation.jarLocation;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -67,7 +68,7 @@ class ComponentModelTest {
 
     @BeforeAll
     static void mockOSGI() throws Exception {
-        final EquinoxContainer equinoxContainer = new EquinoxContainer(new HashMap<>());
+        final EquinoxContainer equinoxContainer = new EquinoxContainer(new HashMap<>(), null);
         final EquinoxContainerAdaptor adaptor =
                 new EquinoxContainerAdaptor(equinoxContainer, Storage.createStorage(equinoxContainer), new HashMap<>());
         final ModuleContainer moduleContainer = new ModuleContainer(adaptor, new ModuleDatabase(adaptor));
