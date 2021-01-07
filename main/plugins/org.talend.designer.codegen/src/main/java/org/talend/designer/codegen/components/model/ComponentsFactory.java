@@ -149,12 +149,12 @@ public class ComponentsFactory implements IComponentsFactory {
     }
 
     private void init(boolean duringLogon) {
+        if (isInitialized.get()) {
+            return;
+        }
         try {
             try {
                 initialiseLock.lock();
-                if (componentList != null) {
-                    return;
-                }
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
@@ -235,7 +235,6 @@ public class ComponentsFactory implements IComponentsFactory {
         if (timeout < 0) {
             log.warn("wait4InitialiseFinish timeout");
         }
-        // initialise failed, still need to initialise
         return false;
     }
 
