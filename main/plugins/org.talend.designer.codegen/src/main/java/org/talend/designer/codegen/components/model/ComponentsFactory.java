@@ -148,10 +148,10 @@ public class ComponentsFactory implements IComponentsFactory {
             return;
         }
         initialiseLock.lock();
-        if (isInitialized.get()) {
-            return;
-        }
         try {
+            if (isInitialized.get() || componentList != null) {
+                return;
+            }
             try {
 				removeOldComponentsUserFolder();
 			} catch (IOException ex) {
@@ -775,7 +775,7 @@ public class ComponentsFactory implements IComponentsFactory {
 
     @Override
     public boolean isInitialising() {
-        return isInitialized.get();
+        return !isInitialized.get();
     }
 
     @Override
