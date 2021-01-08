@@ -139,25 +139,19 @@ public class ComponentsFactory implements IComponentsFactory {
 
     protected static Map<String, Map<String, Set<IComponent>>> componentNameMap;
 
-    private AtomicBoolean isInitialized;
+    private AtomicBoolean isInitialized = new AtomicBoolean(false);
 
-    private volatile Lock initialiseLock;
-
-    public ComponentsFactory() {
-        isInitialized = new AtomicBoolean(false);
-        initialiseLock = new ReentrantLock();
-    }
+    private volatile Lock initialiseLock = new ReentrantLock();
 
     private void init(boolean duringLogon) {
         if (isInitialized.get()) {
             return;
         }
+        initialiseLock.lock();
+        if (isInitialized.get()) {
+            return;
+        }
         try {
-            try {
-                initialiseLock.lock();
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
             try {
 				removeOldComponentsUserFolder();
 			} catch (IOException ex) {
@@ -224,7 +218,7 @@ public class ComponentsFactory implements IComponentsFactory {
                 ExceptionHandler.process(e);
             }
         }
-        while (!isInitialized.get()) {
+        while (!isInitialized.get() && timeout > 0) {
             try {
                 Thread.sleep(10);
             } catch (InterruptedException e) {
