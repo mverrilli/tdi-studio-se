@@ -139,19 +139,26 @@ public class ComponentsFactory implements IComponentsFactory {
 
     protected static Map<String, Map<String, Set<IComponent>>> componentNameMap;
 
-    private AtomicBoolean isInitialized = new AtomicBoolean(false);
+    private AtomicBoolean isInitialising;
 
-    private volatile Lock initialiseLock = new ReentrantLock();
+    private volatile Lock initialiseLock;
+
+    public ComponentsFactory() {
+        isInitialising = new AtomicBoolean(false);
+        initialiseLock = new ReentrantLock();
+    }
 
     private void init(boolean duringLogon) {
-        if (isInitialized.get()) {
+        if (wait4InitialiseFinish()) {
             return;
         }
-        initialiseLock.lock();
         try {
-            if (isInitialized.get() || componentList != null) {
-                return;
+            try {
+                initialiseLock.lock();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
+            isInitialising.set(true);
             try {
 				removeOldComponentsUserFolder();
 			} catch (IOException ex) {
@@ -191,44 +198,48 @@ public class ComponentsFactory implements IComponentsFactory {
             initComponentNameMap();
 
             // TimeMeasure.step("initComponents", "createCache");
-            log.info(componentList.size() + " components loaded in " + (System.currentTimeMillis() - startTime) + " ms"); //$NON-NLS-1$ //$NON-NLS-2$
+            log.debug(componentList.size() + " components loaded in " + (System.currentTimeMillis() - startTime) + " ms"); //$NON-NLS-1$ //$NON-NLS-2$
 
             // TimeMeasure.end("initComponents");
             // TimeMeasure.display = false;
             // TimeMeasure.displaySteps = false;
             // TimeMeasure.measureActive = false;
         } finally {
-            isInitialized.set(true);
+            isInitialising.set(false);
             initialiseLock.unlock();
         }
     }
 
     private boolean wait4InitialiseFinish() {
-        return wait4InitialiseFinish(false);
-    }
-
-    private boolean wait4InitialiseFinish(boolean logon) {
-        init(logon);
-        int timeout = 610;
-        String timeoutStr = System.getProperty("studio.componentsFactory.init.timeout"); //$NON-NLS-1$
-        if (!StringUtils.isBlank(timeoutStr)) {
+        if (isInitialising.get()) {
             try {
-                timeout = Integer.valueOf(timeoutStr) / 10 + 10;
+                // wait for 10 min (10 * 60 seconds) by default
+                long timeout = 600L;
+                String timeoutStr = System.getProperty("studio.componentsFactory.init.timeout"); //$NON-NLS-1$
+                if (!StringUtils.isBlank(timeoutStr)) {
+                    try {
+                        timeout = Long.valueOf(timeoutStr);
+                    } catch (Exception e) {
+                        ExceptionHandler.process(e);
+                    }
+                }
+                if (initialiseLock.tryLock(timeout, TimeUnit.SECONDS)) {
+                    initialiseLock.unlock();
+                } else {
+                    // may be track in dead lock, throw exception to try to break dead lock
+                    throw new RuntimeException(Messages.getString("ComponentsFactory.init.waitForFinish.timeout")); //$NON-NLS-1$
+                }
+                // initialise successfully or not
+                return !isInitialising.get();
+            } catch (RuntimeException e) {
+                throw e;
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
             } catch (Exception e) {
                 ExceptionHandler.process(e);
             }
         }
-        while (!isInitialized.get() && timeout > 0) {
-            try {
-                Thread.sleep(10);
-            } catch (InterruptedException e) {
-                ExceptionHandler.process(e);
-            }
-            timeout--;
-        }
-        if (timeout < 0) {
-            log.warn("wait4InitialiseFinish timeout");
-        }
+        // initialise failed, still need to initialise
         return false;
     }
 
@@ -689,12 +700,18 @@ public class ComponentsFactory implements IComponentsFactory {
     @Override
     public int size() {
         wait4InitialiseFinish();
+        if (componentList == null) {
+            init(false);
+        }
         return componentList.size();
     }
 
     @Override
     public IComponent get(String name) {
         wait4InitialiseFinish();
+        if (componentList == null) {
+            init(false);
+        }
 
         for (IComponent comp : componentList) {
             if (comp != null && comp.getName().equals(name)
@@ -702,7 +719,6 @@ public class ComponentsFactory implements IComponentsFactory {
                 return comp;
             } // else keep looking
         }
-        log.warn("can not find component: " + name);
         return null;
     }
 
@@ -714,19 +730,25 @@ public class ComponentsFactory implements IComponentsFactory {
     @Override
     public IComponent get(String name, String paletteType) {
         wait4InitialiseFinish();
+        if (componentList == null) {
+            init(false);
+        }
 
         for (IComponent comp : componentList) {
             if (comp != null && comp.getName().equals(name) && paletteType.equals(comp.getPaletteType())) {
                 return comp;
             }
         }
-        log.warn("can not find component: " + name + ", type: " + paletteType);
+
         return null;
     }
 
     @Override
     public IComponent getJobletComponent(String name, String paletteType) {
         wait4InitialiseFinish();
+        if (componentList == null) {
+            init(false);
+        }
 
         // check if reference joblet component presents
         JobletUtil jobletUtils = new JobletUtil();
@@ -750,6 +772,9 @@ public class ComponentsFactory implements IComponentsFactory {
     public void initializeComponents(IProgressMonitor monitor) {
         this.monitor = monitor;
         wait4InitialiseFinish();
+        if (componentList == null) {
+            init(false);
+        }
         this.monitor = null;
         this.subMonitor = null;
     }
@@ -757,7 +782,10 @@ public class ComponentsFactory implements IComponentsFactory {
     @Override
     public void initializeComponents(IProgressMonitor monitor, boolean duringLogon) {
         this.monitor = monitor;
-        wait4InitialiseFinish(duringLogon);
+        wait4InitialiseFinish();
+        if (componentList == null) {
+            init(duringLogon);
+        }
         this.monitor = null;
         this.subMonitor = null;
     }
@@ -770,12 +798,15 @@ public class ComponentsFactory implements IComponentsFactory {
     @Override
     public Set<IComponent> getComponents() {
         wait4InitialiseFinish();
+        if (componentList == null) {
+            init(false);
+        }
         return componentList;
     }
 
     @Override
     public boolean isInitialising() {
-        return !isInitialized.get();
+        return isInitialising.get();
     }
 
     @Override
@@ -791,12 +822,18 @@ public class ComponentsFactory implements IComponentsFactory {
     @Override
     public Map<String, Map<String, Set<IComponent>>> getComponentNameMap() {
         wait4InitialiseFinish();
+        if (componentNameMap == null) {
+            init(false);
+        }
         return componentNameMap;
     }
 
     @Override
     public List<IComponent> getCustomComponents() {
         wait4InitialiseFinish();
+        if (customComponentList == null) {
+            init(false);
+        }
         return new ArrayList<IComponent>(customComponentList);
     }
 
@@ -808,6 +845,9 @@ public class ComponentsFactory implements IComponentsFactory {
     @Override
     public List<String> getSkeletons() {
         wait4InitialiseFinish();
+        if (skeletonList == null) {
+            init(false);
+        }
         return skeletonList;
     }
 
@@ -843,7 +883,7 @@ public class ComponentsFactory implements IComponentsFactory {
                 jobletService.clearSparkStreamingJobletComponent();
             }
         }
-        isInitialized.set(false);
+        isInitialising.set(false);
     }
 
     @Override
