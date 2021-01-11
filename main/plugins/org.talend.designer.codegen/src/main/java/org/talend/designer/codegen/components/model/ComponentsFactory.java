@@ -103,7 +103,7 @@ public class ComponentsFactory implements IComponentsFactory {
 
     private static final String TALEND_FILE_NAME = "cache";
 
-    private static final String OLD_COMPONENTS_USER_INNER_FOLDER = "user"; //$NON-NLS-1$
+    public static final String OLD_COMPONENTS_USER_INNER_FOLDER = "user"; //$NON-NLS-1$
 
     private static Logger log = Logger.getLogger(ComponentsFactory.class);
 
@@ -158,6 +158,7 @@ public class ComponentsFactory implements IComponentsFactory {
             } catch (Exception e) {
                 throw new RuntimeException(e);
             }
+            log.debug("init " + this.hashCode());
             isInitialising.set(true);
             try {
 				removeOldComponentsUserFolder();
@@ -192,13 +193,14 @@ public class ComponentsFactory implements IComponentsFactory {
 
             loadComponentsFromExtensions();
 
-            Set<IComponent> javajetComponents = ComponentsLoader.getInstance().loadAllComponentsFromIndex();
-            componentList.addAll(javajetComponents);
+            ComponentsLoader.getInstance().loadAllComponentsFromIndex(componentList, customComponentList, userComponentList,
+                    componentToProviderMap);
+
             // init component name map, used to pick specified component immediately
             initComponentNameMap();
 
             // TimeMeasure.step("initComponents", "createCache");
-            log.debug(componentList.size() + " components loaded in " + (System.currentTimeMillis() - startTime) + " ms"); //$NON-NLS-1$ //$NON-NLS-2$
+            log.info(componentList.size() + " components loaded in " + (System.currentTimeMillis() - startTime) + " ms"); //$NON-NLS-1$ //$NON-NLS-2$
 
             // TimeMeasure.end("initComponents");
             // TimeMeasure.display = false;
@@ -570,40 +572,13 @@ public class ComponentsFactory implements IComponentsFactory {
                             ComponentManager.setModified(true); // this will force to save the cache later.
                         }
 
-                        boolean hiddenComponent = false;
-
-                        Collection<IComponentFactoryFilter> filters = ComponentsFactoryProviderManager.getInstance()
-                                .getProviders();
-                        for (IComponentFactoryFilter filter : filters) {
-                            if (!filter.isAvailable(currentComp.getName())) {
-                                hiddenComponent = true;
-                                break;
-                            }
+                        if (ComponentsLoader.skipLoadComponent(currentComp)) {
+                            // continue;
                         }
 
-                        // if the component is not needed in the current branding,
-                        // and that this one IS NOT a specific component for code generation
-                        // just don't load it
-                        if (hiddenComponent
-                                && !(currentComp.getOriginalFamilyName().contains("Technical") || currentComp.isTechnical())) {
-                            continue;
-                        }
+                        ComponentsLoader.setComponentType(currentComp, provider);
 
                         componentToProviderMap.put(currentComp, provider);
-
-                        // if the component is not needed in the current branding,
-                        // and that this one IS a specific component for code generation,
-                        // hide it
-                        if (hiddenComponent
-                                && (currentComp.getOriginalFamilyName().contains("Technical") || currentComp.isTechnical())) {
-                            currentComp.setVisible(false);
-                            currentComp.setTechnical(true);
-                        }
-                        if (provider.getId().contains("Camel")) {
-                            currentComp.setPaletteType(ComponentCategory.CATEGORY_4_CAMEL.getName());
-                        } else {
-                            currentComp.setPaletteType(currentComp.getType());
-                        }
 
                         if (componentList.contains(currentComp)) {
                             log.warn("Component " + currentComp.getName() + " already exists. Cannot load user version."); //$NON-NLS-1$ //$NON-NLS-2$
@@ -616,14 +591,8 @@ public class ComponentsFactory implements IComponentsFactory {
                             if (isCustom) {
                                 customComponentList.add(currentComp);
                             }
-                            if (pathSource != null) {
-                                Path userComponent = new Path(pathSource);
-                                Path templatePath = new Path(IComponentsFactory.COMPONENTS_INNER_FOLDER + File.separatorChar
-                                        + IComponentsFactory.EXTERNAL_COMPONENTS_INNER_FOLDER + File.separatorChar
-                                        + ComponentUtilities.getExtFolder(OLD_COMPONENTS_USER_INNER_FOLDER));
-                                if (userComponent.equals(templatePath)) {
-                                    userComponentList.add(currentComp);
-                                }
+                            if (ComponentsLoader.isUserComponent(pathSource)) {
+                                userComponentList.add(currentComp);
                             }
                         }
 
@@ -719,6 +688,7 @@ public class ComponentsFactory implements IComponentsFactory {
                 return comp;
             } // else keep looking
         }
+        log.debug("can not get componentList.size: " + componentList.size() + ",name: " + name);
         return null;
     }
 
@@ -733,13 +703,12 @@ public class ComponentsFactory implements IComponentsFactory {
         if (componentList == null) {
             init(false);
         }
-
         for (IComponent comp : componentList) {
             if (comp != null && comp.getName().equals(name) && paletteType.equals(comp.getPaletteType())) {
                 return comp;
             }
         }
-
+        log.debug("can not get componentList.size: " + componentList.size() + ",name: " + name + ",paletteType: " + paletteType);
         return null;
     }
 

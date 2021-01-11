@@ -3531,7 +3531,7 @@ public class EmfComponent extends AbstractBasicComponent {
                 if (absolutePath != null) {
                     LibrariesIndexManager.getInstance().AddStudioLibs(m.getModuleName(), m.getModuleLocaion());
                     try {
-                        librairesManagerService.deploy(new java.net.URI(absolutePath), null, false);
+                        librairesManagerService.deploy(new java.net.URI(absolutePath), m.getMavenUri(), false);
                     } catch (Exception e) {
                         // do nothing
                     }
