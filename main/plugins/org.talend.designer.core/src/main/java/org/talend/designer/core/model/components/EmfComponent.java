@@ -76,6 +76,7 @@ import org.talend.core.model.components.IMultipleComponentItem;
 import org.talend.core.model.components.IMultipleComponentManager;
 import org.talend.core.model.general.InstallModule;
 import org.talend.core.model.general.ModuleNeeded;
+import org.talend.core.model.general.ModuleNeeded.ELibraryInstallStatus;
 import org.talend.core.model.metadata.IMetadataColumn;
 import org.talend.core.model.metadata.IMetadataTable;
 import org.talend.core.model.metadata.MetadataColumn;
@@ -3496,6 +3497,10 @@ public class EmfComponent extends AbstractBasicComponent {
             return;
         }
         componentImportNeedsList.forEach(m->{
+            // already installed
+            if (m.getStatus() == ELibraryInstallStatus.INSTALLED) {
+                return;
+            }
             LibrariesIndexManager.getInstance().AddMavenLibs(m.getModuleName(), m.getMavenUri());
             String urlPath = m.getModuleLocaion();
             String absolutePath = null;
