@@ -16,8 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
-import java.net.URLConnection;
-import java.net.URLStreamHandler;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -37,7 +35,6 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.RGB;
-import org.ops4j.pax.url.mvn.MavenResolver;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.Version;
@@ -1243,15 +1240,9 @@ public class Component extends AbstractBasicComponent {
                 JarRuntimeInfo currentRuntimeInfo = (JarRuntimeInfo) runtimeInfo;
                 runtimeInfo = currentRuntimeInfo.cloneWithNewJarUrlString(currentRuntimeInfo.getJarUrl().toString()
                         .replace("mvn:", "mvn:" + MavenConstants.LOCAL_RESOLUTION_URL + "!"),
-                        new URLStreamHandler() {
-
-                            @Override
-                            protected URLConnection openConnection(URL url) throws IOException {
-                                MavenResolver resolver = TalendMavenResolver.getMavenResolver();
-                                return new org.ops4j.pax.url.mvn.internal.Connection(url, resolver);
-                            }
-                        });
+                        new org.ops4j.pax.url.mvn.Handler(TalendMavenResolver.getMavenResolver()));
             }
+            ;
             final Bundle bundle = FrameworkUtil.getBundle(componentDefinition.getClass());
             for (URL mvnUri : runtimeInfo.getMavenUrlDependencies()) {
                 ModuleNeeded moduleNeeded = new ModuleNeeded(getName(), "", true, mvnUri.toString()); //$NON-NLS-1$
