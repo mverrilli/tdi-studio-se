@@ -5,7 +5,7 @@
 // This source code is available under agreement available at
 // %InstallDIR%\features\org.talend.rcp.branding.%PRODUCTNAME%\%PRODUCTNAME%license.txt
 //
-// You should have received a copy of the agreementJarRuntimeInfo
+// You should have received a copy of the agreement
 // along with this program; if not, write to Talend SA
 // 9 rue Pages 92150 Suresnes, France
 //
@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLStreamHandler;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -35,6 +37,7 @@ import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.RGB;
+import org.ops4j.pax.url.mvn.MavenResolver;
 import org.osgi.framework.Bundle;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.Version;
@@ -79,6 +82,7 @@ import org.talend.core.model.repository.ERepositoryObjectType;
 import org.talend.core.model.temp.ECodePart;
 import org.talend.core.model.utils.ContextParameterUtils;
 import org.talend.core.model.utils.NodeUtil;
+import org.talend.core.nexus.TalendMavenResolver;
 import org.talend.core.prefs.ITalendCorePrefConstants;
 import org.talend.core.runtime.maven.MavenArtifact;
 import org.talend.core.runtime.maven.MavenConstants;
@@ -1239,8 +1243,14 @@ public class Component extends AbstractBasicComponent {
                 JarRuntimeInfo currentRuntimeInfo = (JarRuntimeInfo) runtimeInfo;
                 runtimeInfo = currentRuntimeInfo.cloneWithNewJarUrlString(currentRuntimeInfo.getJarUrl().toString()
                         .replace("mvn:", "mvn:" + MavenConstants.LOCAL_RESOLUTION_URL + "!"),
-                        new org.ops4j.pax.url.mvn.Handler());
+                        new URLStreamHandler() {
 
+                            @Override
+                            protected URLConnection openConnection(URL url) throws IOException {
+                                MavenResolver resolver = TalendMavenResolver.getMavenResolver();
+                                return new org.ops4j.pax.url.mvn.internal.Connection(url, resolver);
+                            }
+                        });
             }
             final Bundle bundle = FrameworkUtil.getBundle(componentDefinition.getClass());
             for (URL mvnUri : runtimeInfo.getMavenUrlDependencies()) {
