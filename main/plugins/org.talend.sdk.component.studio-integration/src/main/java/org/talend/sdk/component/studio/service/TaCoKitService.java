@@ -25,6 +25,7 @@ import org.talend.sdk.component.studio.metadata.TaCoKitCache;
 import org.talend.sdk.component.studio.model.parameter.PropertyDefinitionDecorator;
 import org.talend.sdk.component.studio.model.parameter.VersionParameter;
 import org.talend.sdk.component.studio.toolbar.ReloadAction;
+import org.talend.sdk.component.studio.util.TaCoKitUtil;
 import org.talend.updates.runtime.service.ITaCoKitUpdateService;
 
 
