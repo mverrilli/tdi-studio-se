@@ -411,15 +411,16 @@ public class TaCoKitMetadataContentProvider extends AbstractMetadataContentProvi
             for (Container<String, IRepositoryViewObject> subContainer : subContainers) {
                 try {
                     String folderName = subContainer.getLabel();
-                    if (typeFolders.contains(folderName)) {
-                        // ignore type folders, since they store sub types
-                        continue;
-                    }
+                    
                     Folder oFolder = new Folder((Property) subContainer.getProperty(), repObjType);
                     if (factory.getStatus(oFolder) != ERepositoryStatus.DELETED) {
                         TaCoKitFolderRepositoryNode folderNode = new TaCoKitFolderRepositoryNode(oFolder,
                                 (RepositoryNode) parentNode, parentNode, folderName, configTypeNode);
-                        parentNode.getChildren().add(folderNode);
+                        if (!typeFolders.contains(folderName)) {
+                            // ignore type folders, since they store sub types
+                            parentNode.getChildren().add(folderNode);
+                        }
+                       
                         loadFromStorage(folderNode, allObjs, usedObjs, subContainer, tacokitRootContainer);
                         folderNode.setInitialized(true);
                     }
