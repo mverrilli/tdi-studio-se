@@ -1,5 +1,5 @@
 <%/*
-  Copyright (C) 2006-2019 Talend Inc. - www.talend.com
+  Copyright (C) 2006-2021 Talend Inc. - www.talend.com
    Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
@@ -30,6 +30,12 @@
     "
 %>
 
-processor_<%=cid%>.onElement(inputs_<%=cid%>, outputs_<%=cid%>);
-nbLineInput_<%=cid%>++;
-globalMap.put("<%=cid %>_NB_LINE", nbLineInput_<%=cid%>);
+try {
+    processor_<%=cid%>.onElement(inputs_<%=cid%>, outputs_<%=cid%>);
+
+    nbLineInput_<%=cid%>++;
+    globalMap.put("<%=cid %>_NB_LINE", nbLineInput_<%=cid%>);
+} catch (Throwable e) {
+    globalMap.put("<%=cid %>_ERROR_MESSAGE", e.getMessage());
+    throw e;
+}

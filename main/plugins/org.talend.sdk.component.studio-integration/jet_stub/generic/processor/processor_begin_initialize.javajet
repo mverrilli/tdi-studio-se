@@ -1,5 +1,5 @@
 <%/*
-  Copyright (C) 2006-2019 Talend Inc. - www.talend.com
+  Copyright (C) 2006-2021 Talend Inc. - www.talend.com
    Licensed under the Apache License, Version 2.0 (the "License");
   you may not use this file except in compliance with the License.
   You may obtain a copy of the License at
@@ -65,7 +65,12 @@
 
     final org.talend.sdk.component.runtime.di.AutoChunkProcessor processor_<%=cid%> = new org.talend.sdk.component.runtime.di.AutoChunkProcessor(chunkSize_<%=cid%>, processorImpl_<%=cid%>);
     org.talend.sdk.component.runtime.di.JobStateAware.init(processorImpl_<%=cid%>, globalMap);
-    processor_<%=cid%>.start();
+    try {
+        processor_<%=cid%>.start();
+    } catch (Throwable e) {
+        globalMap.put("<%=cid %>_ERROR_MESSAGE", e.getMessage());
+        throw e;
+    }
     globalMap.put("processor_<%=cid%>", processor_<%=cid%>);
 
     int nbLineInput_<%=cid%> = 0;

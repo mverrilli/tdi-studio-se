@@ -19,4 +19,10 @@
     final String cid = node.getUniqueName();
 %>
 
-processor_<%=cid%>.flush(outputs_<%=cid%>);
+try {
+    processor_<%=cid%>.flush(outputs_<%=cid%>);
+
+} catch (Throwable e) {
+    globalMap.put("<%=cid %>_ERROR_MESSAGE", e.getMessage());
+    throw e;
+}
