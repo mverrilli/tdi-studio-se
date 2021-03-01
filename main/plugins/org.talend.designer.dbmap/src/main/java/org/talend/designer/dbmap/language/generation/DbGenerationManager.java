@@ -12,8 +12,8 @@
 // ============================================================================
 package org.talend.designer.dbmap.language.generation;
 
-import static java.util.Optional.ofNullable;
-import static java.util.stream.Collectors.toList;
+import static java.util.Optional.*;
+import static java.util.stream.Collectors.*;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -38,7 +38,6 @@ import org.talend.core.model.metadata.IMetadataTable;
 import org.talend.core.model.metadata.MappingTypeRetriever;
 import org.talend.core.model.metadata.MetadataTalendType;
 import org.talend.core.model.metadata.MetadataToolHelper;
-import org.talend.core.model.metadata.builder.database.ExtractMetaDataUtils;
 import org.talend.core.model.process.EConnectionType;
 import org.talend.core.model.process.IConnection;
 import org.talend.core.model.process.IContext;
@@ -909,7 +908,7 @@ public abstract class DbGenerationManager {
     }
 
     protected String getDifferentTable(DbMapComponent dbMapComponent, String outputTableName) {
-        if (!ExtractMetaDataUtils.SNOWFLAKE.equalsIgnoreCase(getDbType(dbMapComponent))) {
+        if (!"Snowflake".equalsIgnoreCase(getDbType(dbMapComponent))) {//$NON-NLS-1$
             return null;
         }
         List<IConnection> outputConnections = (List<IConnection>) dbMapComponent.getOutgoingConnections();
