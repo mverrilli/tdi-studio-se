@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.resources.IFolder;
 import org.eclipse.core.resources.IProject;
@@ -191,7 +192,11 @@ public class TalendJavaProjectManager {
                 IWorkspaceRoot root = ResourcesPlugin.getWorkspace().getRoot();
                 AggregatorPomsHelper helper = new AggregatorPomsHelper(projectTechName);
                 IFolder codeProjectFolder = helper.getProjectPomsFolder().getFolder(type.getFolder());
-                cleanUpCodeProject(monitor, codeProjectFolder);
+                try {
+                    cleanUpCodeProject(monitor, codeProjectFolder);
+                }catch (Exception e) {
+                    ExceptionHandler.process(e);
+                }
                 IProject codeProject = root.getProject((projectTechName + "_" + type.name()).toUpperCase()); //$NON-NLS-1$
                 if (!codeProject.exists() || TalendCodeProjectUtil.needRecreate(monitor, codeProject)) {
                     // always enable maven nature for code projects.
@@ -248,11 +253,15 @@ public class TalendJavaProjectManager {
         cleanFolder(monitor, targetFolder);
     }
 
-    private static void cleanFolder(IProgressMonitor monitor, IFolder folder) throws CoreException {
+    private static void cleanFolder(IProgressMonitor monitor, IContainer folder) throws CoreException {
         if (folder != null && folder.exists()) {
             IResource[] childrenRecs = folder.members();
             for (IResource child : childrenRecs) {
-                child.delete(true, monitor);
+                if (child.getType() == IResource.FOLDER) {
+                    cleanFolder(monitor, (IContainer)child);
+                } else {
+                    child.delete(true, monitor);
+                }
             }
         }
     }
