@@ -742,21 +742,6 @@ public abstract class DbGenerationManager {
 
             for (int i = 0; i < lstSizeInputTables; i++) {
                 ExternalDbMapTable inputTable = inputTables.get(i);
-                IJoinType joinType = null;
-                if (i == 0) {
-                    joinType = AbstractDbLanguage.JOIN.NO_JOIN;
-                } else {
-                    joinType = language.getJoin(inputTable.getJoinType());
-                }
-                if (language.unuseWithExplicitJoin().contains(joinType) && !explicitJoin) {
-                    appendSqlQuery(sb, DbMapSqlConstants.SPACE);
-                    appendSqlQuery(sb, inputTable.getTableName());
-                    String alias = inputTable.getAlias();
-                    if (org.apache.commons.lang.StringUtils.isNotEmpty(alias)) {
-                        appendSqlQuery(sb, DbMapSqlConstants.SPACE);
-                        appendSqlQuery(sb, alias);
-                    }
-                }
                 boolean commaCouldBeAdded = i > 0;
                 buildTableDeclaration(component, sb, inputTable, commaCouldBeAdded, false, false);
             }
