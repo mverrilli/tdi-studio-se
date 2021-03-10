@@ -71,4 +71,10 @@ public class TaCoKitConst {
     public static final String MAVEN_INF = "MAVEN-INF"; //$NON-NLS-1$
 
     public static final String TALEND_INF = "TALEND-INF"; //$NON-NLS-1$
+
+    public static final String META_KEY_AFTER_VARIABLE = "variables::after::value"; //$NON-NLS-1$
+
+    public static final String AFTER_VARIABLE_VALUE_DELIMITER = "\\\\:";
+
+    public static final String AFTER_VARIABLE_LINE_DELIMITER = "\\\\;";
 }
