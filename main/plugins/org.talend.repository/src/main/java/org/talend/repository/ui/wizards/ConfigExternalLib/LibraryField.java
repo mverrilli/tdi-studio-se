@@ -89,7 +89,7 @@ public class LibraryField extends TableField {
                     final Table contextTable = (Table) event.widget;
                     TableItem[] selection = contextTable.getSelection();
                     if (selection.length > 0) {
-                        final TableItem item = contextTable.getSelection()[0];
+                        final TableItem item = selection[0];
                         if (item.getBounds(1).contains(event.x, event.y)) {
                             IMPORTType it = (IMPORTType) getList().get(contextTable.getSelectionIndex());
                             if (it.eContainer() instanceof RoutineItem || it.eContainer() instanceof RoutinesJarType) {
