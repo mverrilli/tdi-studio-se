@@ -1369,15 +1369,6 @@
        <projecttask
              beforeLogon="false"
              breaks="5.1.1"
-             class="org.talend.repository.model.migration.MergeTosMetadataMigrationTask"
-             description="merge metadata"
-             id="org.talend.repository.MergeTosMetadataMigrationTask"
-             name="MergeTosMetadataMigrationTask"
-             version="5.1.2">
-       </projecttask>
-       <projecttask
-             beforeLogon="false"
-             breaks="5.1.1"
              class="org.talend.repository.model.migration.AddWebServiceOutputTableMigrationTask"
              description="modify metadataTable"
              id="org.talend.repository.AddWebServiceOutputTableMigrationTask"
