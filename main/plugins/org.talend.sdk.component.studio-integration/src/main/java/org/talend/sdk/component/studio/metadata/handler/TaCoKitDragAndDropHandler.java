@@ -51,6 +51,7 @@ import org.talend.sdk.component.server.front.model.ComponentIndices;
 import org.talend.sdk.component.server.front.model.ConfigTypeNode;
 import org.talend.sdk.component.studio.ComponentModel;
 import org.talend.sdk.component.studio.Lookups;
+import org.talend.sdk.component.studio.TaCoKitGenericProvider;
 import org.talend.sdk.component.studio.metadata.model.TaCoKitConfigurationModel;
 import org.talend.sdk.component.studio.metadata.model.TaCoKitConfigurationModel.ValueModel;
 import org.talend.sdk.component.studio.metadata.node.ITaCoKitRepositoryNode;
@@ -135,16 +136,18 @@ public class TaCoKitDragAndDropHandler extends AbstractDragAndDropServiceHandler
      * @return stored value key
      * @throws Exception Exception should be handled by ExceptionHandler
      */
-    private String computeKey(final TaCoKitConfigurationModel model, String parameterId,
-            String component) throws Exception {
-        final Map<String, PropertyDefinitionDecorator> tree = retrieveProperties(component);
-        final Optional<String> configPath = findConfigPath(tree, model, parameterId);
-        final String modelRoot = findModelRoot(model);
-
-        if (configPath.isPresent()) {
-            return parameterId.replace(configPath.get(), modelRoot);
+    private String computeKey(final TaCoKitConfigurationModel model, String parameterId, String component) throws Exception {
+        if (TaCoKitGenericProvider.isVirtualComponent(component)) {
+            return parameterId;
         } else {
-            return null;
+            final Map<String, PropertyDefinitionDecorator> tree = retrieveProperties(component);
+            Optional<String> configPath = findConfigPath(tree, model, parameterId);
+            String modelRoot = findModelRoot(model);
+            if (configPath.isPresent()) {
+                return parameterId.replace(configPath.get(), modelRoot);
+            } else {
+                return null;
+            }
         }
     }
 

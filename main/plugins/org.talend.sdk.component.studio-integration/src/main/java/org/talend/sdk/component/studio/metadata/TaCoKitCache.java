@@ -156,6 +156,23 @@ public class TaCoKitCache {
         return configTypeNodeMapCache;
     }
 
+    public ConfigTypeNode findConfigTypeNodeById(String familyName, final String configurationType) {
+        if (familyConfigTypes == null) {
+            fillFamilyConfig();
+        }
+        final ConfigTypeNode familyConfig = familyConfigTypes.get(familyName);
+        if (familyConfig == null) {
+            return null;
+        }
+        for (final String edge : familyConfig.getEdges()) {
+            final ConfigTypeNode node = getConfigTypeNodeMap().get(edge);
+            if (node != null && configurationType.equals(node.getConfigurationType())) {
+                return node;
+            }
+        }
+        return null;
+    }
+    
     public IComponent getTaCoKitGuessSchemaComponent() {
         return this.tacokitGuessSchemaComponent;
     }

@@ -42,8 +42,10 @@ import org.talend.designer.core.model.components.ElementParameter;
 import org.talend.designer.core.ui.preferences.TalendDesignerPrefConstants;
 import org.talend.sdk.component.server.front.model.ComponentDetail;
 import org.talend.sdk.component.server.front.model.ConfigTypeNode;
+import org.talend.sdk.component.server.front.model.SimplePropertyDefinition;
 import org.talend.sdk.component.studio.ComponentModel;
 import org.talend.sdk.component.studio.Lookups;
+import org.talend.sdk.component.studio.VirtualComponentModel;
 import org.talend.sdk.component.studio.model.connector.ConnectorCreatorFactory;
 import org.talend.sdk.component.studio.util.TaCoKitUtil;
 import org.talend.sdk.studio.process.TaCoKitNode;
@@ -90,6 +92,23 @@ public class ElementParameterCreator {
             this.properties = emptyList();
         }
     }
+    
+    public ElementParameterCreator(final ComponentModel component, final ComponentDetail detail, Collection<SimplePropertyDefinition> properties, final INode node,
+            final String reportPath, final boolean isCatcherAvailable) {
+        this.component = component;
+        this.detail = detail;
+        this.node = node;
+        this.isCatcherAvailable = isCatcherAvailable;
+        this.reportPath = reportPath;
+        if (properties != null) {
+            this.properties = PropertyDefinitionDecorator.wrap(properties);
+        } else if (!detail.getProperties().isEmpty()) {
+            this.properties = PropertyDefinitionDecorator.wrap(detail.getProperties());
+        }else {
+            this.properties = emptyList();
+        }
+    }
+    
 
     public List<? extends IElementParameter> createParameters() {
         addCommonParameters();
@@ -185,6 +204,9 @@ public class ElementParameterCreator {
     }
 
     private boolean showSchema(final INodeConnector connector) {
+        if (component instanceof VirtualComponentModel) {
+            return false;
+        }
         return (connector.getDefaultConnectionType() == EConnectionType.FLOW_MAIN
                 || connector.getDefaultConnectionType() == EConnectionType.REJECT)
                 && (connector.getMaxLinkInput() != 0 || connector.getMaxLinkOutput() != 0);
@@ -592,7 +614,11 @@ public class ElementParameterCreator {
     private void addComponentNameParameter() {
         final ElementParameter parameter = new ElementParameter(node);
         parameter.setName(EParameterName.COMPONENT_NAME.getName());
-        parameter.setValue(detail.getId().getName());
+        if (component instanceof VirtualComponentModel) {
+            parameter.setValue(((VirtualComponentModel)component).getComponentName()); 
+        } else {
+            parameter.setValue(detail.getId().getName());
+        }
         parameter.setDisplayName(EParameterName.COMPONENT_NAME.getDisplayName());
         parameter.setFieldType(EParameterFieldType.TEXT);
         parameter.setCategory(EComponentCategory.TECHNICAL);
@@ -610,7 +636,11 @@ public class ElementParameterCreator {
     private void addTacokitComponentIdParameter() {
         final ElementParameter parameter = new ElementParameter(node);
         parameter.setName(TaCoKitNode.TACOKIT_COMPONENT_ID);
-        parameter.setValue(detail.getId().getId());
+        if (component instanceof VirtualComponentModel) {
+            parameter.setValue(((VirtualComponentModel)component).getComponentId()); 
+        } else {
+            parameter.setValue(detail.getId().getId());
+        }
         parameter.setDisplayName(TaCoKitNode.TACOKIT_COMPONENT_ID);
         parameter.setFieldType(EParameterFieldType.TECHNICAL);
         parameter.setCategory(EComponentCategory.BASIC);
