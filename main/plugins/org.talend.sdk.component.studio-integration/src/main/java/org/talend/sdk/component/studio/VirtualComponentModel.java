@@ -76,12 +76,23 @@ public class VirtualComponentModel extends ComponentModel {
 
     @Override
     public String getTemplateFolder() {
-        return "tacokit/jet_stub/generic/" + detail.getType().toLowerCase(Locale.ENGLISH);
+        return "tacokit/jet_stub/generic/" + getForder();
+    }
+    
+    private String getForder() {
+        switch(modelType) {
+            case CONNECTION:
+                 return "connection";
+            case CLOSE_CONNECTION:
+                 return "close";
+            default :
+                return null;
+        }
     }
 
     @Override
     public String getTemplateNamePrefix() {
-        return detail.getType().toLowerCase(Locale.ENGLISH);
+        return getForder();
     }
     
     public String getComponentName() {

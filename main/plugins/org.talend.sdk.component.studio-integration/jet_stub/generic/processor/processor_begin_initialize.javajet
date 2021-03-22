@@ -56,6 +56,32 @@
 
     final org.talend.sdk.component.runtime.output.Processor processorImpl_<%=cid%> = mgr_<%=cid%>.findProcessor("<%=family%>", "<%=originalName%>", <%=version%>, configuration_<%=cid%>)
                                                                                  .orElseThrow(() -> new IllegalArgumentException("Can't find <%=family%>#<%=originalName%>"));
+    
+    <%
+    //TODO check it
+    String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+    %>
+    try {
+        java.lang.reflect.Field field = processorImpl_<%=cid%>.getClass().getSuperclass().getDeclaredField("delegate");
+        field.setAccessible(true);
+        Object v = field.get(processor);
+        if (v instanceof org.talend.sdk.component.api.context.RuntimeContextInjector) {
+            org.talend.sdk.component.api.context.RuntimeContext runtimeContext = new org.talend.sdk.component.api.context.RuntimeContext() {
+
+                @Override
+                public Object getConnection() {
+                    return globalMap.get("conn_<%=connection%>");
+                }
+
+            };
+
+            ((org.talend.sdk.component.api.context.RuntimeContextInjector) v).setRuntimeContext(runtimeContext);
+        }
+        field.setAccessible(false);
+    } catch (Exception e) {
+        System.out.println(e);
+    }
+                                                                                 
     final javax.json.bind.Jsonb jsonb_<%=cid%> = (javax.json.bind.Jsonb)mgr_<%=cid%>.findPlugin(processorImpl_<%=cid%>.plugin()).get()
                      .get(org.talend.sdk.component.runtime.manager.ComponentManager.AllServices.class)
                      .getServices().get(javax.json.bind.Jsonb.class);
