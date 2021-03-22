@@ -13,7 +13,6 @@
 package org.talend.sdk.component.studio;
 
 import java.util.List;
-import java.util.Locale;
 
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.talend.core.model.process.IElementParameter;
@@ -40,6 +39,9 @@ public class VirtualComponentModel extends ComponentModel {
 
     @Override
     public String getName() {
+        if (isMadeByTalend()) {
+            return "t" + TaCoKitUtil.getFullComponentName(index.getId().getFamily(), modelType.getDisplayName());
+        }
         return TaCoKitUtil.getFullComponentName(index.getId().getFamily(), modelType.getDisplayName());
     }
 
@@ -73,39 +75,50 @@ public class VirtualComponentModel extends ComponentModel {
         List<IElementParameter> parameters = (List<IElementParameter>) creator.createParameters();
         return parameters;
     }
+    
+    public boolean isShowPropertyParameter() {
+        if (modelType == VirtualComponentModelType.CLOSE) {
+            return false;
+        }   
+        return true;
+    }
 
     @Override
     public String getTemplateFolder() {
         return "tacokit/jet_stub/generic/" + getForder();
     }
-    
+
     private String getForder() {
-        switch(modelType) {
-            case CONNECTION:
-                 return "connection";
-            case CLOSE_CONNECTION:
-                 return "close";
-            default :
-                return null;
+        switch (modelType) {
+        case CONNECTION:
+            return "connection";
+        case CLOSE:
+            return "close";
+        default:
+            return null;
         }
+    }
+
+    public VirtualComponentModelType getModelType() {
+        return modelType;
     }
 
     @Override
     public String getTemplateNamePrefix() {
         return getForder();
     }
-    
+
     public String getComponentName() {
         return getName();
     }
-    
+
     public String getComponentId() {
         return detail.getId().getId() + this.modelType.getDisplayName();
     }
 
     public enum VirtualComponentModelType {
         CONNECTION("Connection"),
-        CLOSE_CONNECTION("CloseConnection");
+        CLOSE("Close");
 
         String displayName;
 

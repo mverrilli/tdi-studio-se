@@ -344,7 +344,7 @@ public class ComponentModel extends AbstractBasicComponent implements IAdditiona
      */
     @Override
     public List<? extends INodeConnector> createConnectors(final INode node) {
-        return ConnectorCreatorFactory.create(detail, node).createConnectors();
+        return ConnectorCreatorFactory.create(this, detail, node).createConnectors();
     }
 
     /**
