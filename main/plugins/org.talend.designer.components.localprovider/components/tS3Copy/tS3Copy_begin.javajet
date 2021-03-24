@@ -144,6 +144,7 @@ imports="
                                                                         partTags_<%=cid%>);
             conn_<%=cid%>.completeMultipartUpload(completeRequest_<%=cid%>);
     		} catch (java.lang.Exception uploadException_<%=cid%>) {
+globalMap.put("<%=cid%>_ERROR_MESSAGE",uploadException_<%=cid%>.getMessage());
     				conn_<%=cid%>.abortMultipartUpload(new com.amazonaws.services.s3.model.AbortMultipartUploadRequest(to_bucket_<%=cid%>, to_key_<%=cid%>, initResult_<%=cid%>.getUploadId()));
     				throw uploadException_<%=cid%>;
     		}
@@ -157,6 +158,7 @@ imports="
 		}
 		%>
 	}catch(java.lang.Exception e_<%=cid%>){
+globalMap.put("<%=cid%>_ERROR_MESSAGE",e_<%=cid%>.getMessage());
 		<%
 		if (("true").equals(dieOnError)) {
 		%>
