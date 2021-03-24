@@ -54,6 +54,33 @@ final org.talend.sdk.component.runtime.record.RecordConverters.MappingMetaRegist
 
 final org.talend.sdk.component.runtime.input.Mapper tempMapper_<%=cid%> = mgr_<%=cid%>.findMapper("<%=family%>", "<%=originalName%>", <%=version%>, configuration_<%=cid%>)
     .orElseThrow(() -> new IllegalArgumentException("Can't find <%=family%>#<%=originalName%>"));
+    
+<%
+//TODO check it after studio add this parameter in ui and model
+String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+//TODO for test only, remove it later
+connection = "NetSuiteConnection_1";
+%>
+try {
+    java.lang.reflect.Field field = tempMapper_<%=cid%>.getClass().getSuperclass().getDeclaredField("delegate");
+    field.setAccessible(true);
+    Object v = field.get(tempMapper_<%=cid%>);
+    if (v instanceof org.talend.sdk.component.api.context.RuntimeContextInjector) {
+        org.talend.sdk.component.api.context.RuntimeContext runtimeContext = new org.talend.sdk.component.api.context.RuntimeContext() {
+
+            @Override
+            public Object getConnection() {
+                return globalMap.get("conn_<%=connection%>");
+            }
+
+        };
+
+        ((org.talend.sdk.component.api.context.RuntimeContextInjector) v).setRuntimeContext(runtimeContext);
+    }
+    field.setAccessible(false);
+} catch (Exception e) {
+    System.out.println(e);
+}
 
 int nbLineInput_<%=cid%> = 0;
 

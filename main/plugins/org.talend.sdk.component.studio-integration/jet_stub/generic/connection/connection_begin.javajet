@@ -50,7 +50,6 @@ if (mgr_<%=cid%>.getContainer().findAll().isEmpty()) {
 
 <%@include file="../configuration.javajet"%>
 
-//TODO the config is right?
 mgr_<%=cid%>.findPlugin("<%=family.toLowerCase()%>")
     .get()
     .get(org.talend.sdk.component.runtime.manager.ContainerComponentRegistry.class)

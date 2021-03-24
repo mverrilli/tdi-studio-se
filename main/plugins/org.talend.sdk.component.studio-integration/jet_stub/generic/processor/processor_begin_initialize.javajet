@@ -58,13 +58,15 @@
                                                                                  .orElseThrow(() -> new IllegalArgumentException("Can't find <%=family%>#<%=originalName%>"));
     
     <%
-    //TODO check it
+    //TODO check it after studio add this parameter in ui and model
     String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+    //TODO for test only, remove it later
+    connection = "NetSuiteConnection_1";
     %>
     try {
         java.lang.reflect.Field field = processorImpl_<%=cid%>.getClass().getSuperclass().getDeclaredField("delegate");
         field.setAccessible(true);
-        Object v = field.get(processor);
+        Object v = field.get(processorImpl_<%=cid%>);
         if (v instanceof org.talend.sdk.component.api.context.RuntimeContextInjector) {
             org.talend.sdk.component.api.context.RuntimeContext runtimeContext = new org.talend.sdk.component.api.context.RuntimeContext() {
 
