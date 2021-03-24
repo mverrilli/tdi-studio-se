@@ -48,18 +48,32 @@ if (mgr_<%=cid%>.getContainer().findAll().isEmpty()) {
     mgr_<%=cid%>.autoDiscoverPlugins(false, true);
 }
 
-<%@include file="../configuration.javajet"%>
+<%
+//TODO check it
+String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+%>
 
-//TODO the config is right?
+//TODO what's the right key?
 mgr_<%=cid%>.findPlugin("<%=family.toLowerCase()%>")
     .get()
     .get(org.talend.sdk.component.runtime.manager.ContainerComponentRegistry.class)
     .getServices()
     .stream()
     .flatMap(c -> c.getActions().stream())
-    .filter(actionMeta -> "createconnection".equals(actionMeta.getType()))
+    .filter(actionMeta -> "closeconnection".equals(actionMeta.getType()))
     .forEach(actionMeta -> {
-        Object connnection = actionMeta.getInvoker().apply(configuration_<%=cid%>);
+        Object result = actionMeta.getInvoker().apply(null);
+        org.talend.sdk.component.api.service.connection.CloseConnectionObject cco = (org.talend.sdk.component.api.service.connection.CloseConnectionObject) result;
 
-        globalMap.put("conn_<%=cid%>", connnection);
+        org.talend.sdk.component.api.context.RuntimeContext runtimeContext = new org.talend.sdk.component.api.context.RuntimeContext() {
+
+            @Override
+            public Object getConnection() {
+                return globalMap.get("conn_<%=connection%>");
+            }
+
+        };
+
+        cco.setRuntimeContext(runtimeContext);
+        boolean r = cco.close();
     });
