@@ -54,6 +54,43 @@ final org.talend.sdk.component.runtime.record.RecordConverters.MappingMetaRegist
 
 final org.talend.sdk.component.runtime.input.Mapper tempMapper_<%=cid%> = mgr_<%=cid%>.findMapper("<%=family%>", "<%=originalName%>", <%=version%>, configuration_<%=cid%>)
     .orElseThrow(() -> new IllegalArgumentException("Can't find <%=family%>#<%=originalName%>"));
+    
+<%
+//TODO check it after studio add these parameters in ui and model
+boolean useExistedConnection = true;
+String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+//TODO for test only, remove it later
+connection = "NetSuiteConnection_1";
+if(useExistedConnection) {//}
+%>
+try {
+    java.lang.reflect.Field field_<%=cid%> = tempMapper_<%=cid%>.getClass().getSuperclass().getDeclaredField("delegate");
+    field_<%=cid%>.setAccessible(true);
+    Object v_<%=cid%> = field_<%=cid%>.get(tempMapper_<%=cid%>);
+    if (v_<%=cid%> instanceof org.talend.sdk.component.api.context.RuntimeContextInjector) {
+        org.talend.sdk.component.api.context.RuntimeContext runtimeContext_<%=cid%> = new org.talend.sdk.component.api.context.RuntimeContext() {
+
+            @Override
+            public Object getConnection() {
+                Object con_<%=cid%> = globalMap.get("conn_<%=connection%>");
+                if(con_<%=cid%>==null) {
+                    throw new RuntimeException("can't find the connection object");
+                }
+                return con_<%=cid%>;
+            }
+
+        };
+
+        ((org.talend.sdk.component.api.context.RuntimeContextInjector) v_<%=cid%>).setRuntimeContext(runtimeContext_<%=cid%>);
+    }
+    field_<%=cid%>.setAccessible(false);
+} catch (Exception e_<%=cid%>) {
+    System.out.println(e_<%=cid%>);
+}
+<%
+//{
+}
+%>
 
 int nbLineInput_<%=cid%> = 0;
 
