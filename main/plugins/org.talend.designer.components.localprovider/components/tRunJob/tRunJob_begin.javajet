@@ -263,7 +263,12 @@ try {
 				    if (commandLine[j].indexOf("\"") >= 0){
 				    	if(commandLine[j].indexOf(".jar")>=0){
 				    %>
-				    		String classpath_<%=cid %>_<%=i %>_<%=j %> = <%=commandLine[j] %>;
+				            String classpath_<%=cid %>_<%=i %>_<%=j %> = null;
+				            <%if(ProcessorUtilities.isCIMode()){%>
+				                classpath_<%=cid %>_<%=i %>_<%=j %> = System.getProperty("java.class.path");
+				            <%} else {%>
+				                classpath_<%=cid %>_<%=i %>_<%=j %> = <%=commandLine[j] %>;
+				            <%}%>
 				    		<%if(isCP && (commandLine[j].endsWith(":\"") || commandLine[j].endsWith(";\""))) {%>
 				    		if(audit_jar_path_<%=cid %>!=null && !audit_jar_path_<%=cid %>.isEmpty()) {
 				      			classpath_<%=cid %>_<%=i %>_<%=j %> += audit_jar_path_<%=cid %>;
@@ -285,7 +290,13 @@ try {
 				    }else{
 				    	if(commandLine[j].indexOf(".jar")>=0){
 				    %>
-				    		String classpath_<%=cid %>_<%=i %>_<%=j %> = "<%=commandLine[j] %>";
+				    		String classpath_<%=cid %>_<%=i %>_<%=j %> = null;
+				            <%if(ProcessorUtilities.isCIMode()){%>
+				                classpath_<%=cid %>_<%=i %>_<%=j %> = System.getProperty("java.class.path");
+				            <%} else {%>
+				                classpath_<%=cid %>_<%=i %>_<%=j %> = <%=commandLine[j] %>;
+				            <%}%>
+				            
 				    		<%if(isCP && (commandLine[j].endsWith(":") || commandLine[j].endsWith(";"))) {%>
 				    		if(audit_jar_path_<%=cid %>!=null && !audit_jar_path_<%=cid %>.isEmpty()) {
 				      			classpath_<%=cid %>_<%=i %>_<%=j %> += audit_jar_path_<%=cid %>;
