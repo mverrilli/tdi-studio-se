@@ -55,10 +55,10 @@ mgr_<%=cid%>.findPlugin("<%=family.toLowerCase()%>")
     .get(org.talend.sdk.component.runtime.manager.ContainerComponentRegistry.class)
     .getServices()
     .stream()
-    .flatMap(c -> c.getActions().stream())
-    .filter(actionMeta -> "createconnection".equals(actionMeta.getType()))
-    .forEach(actionMeta -> {
-        Object connnection = actionMeta.getInvoker().apply(configuration_<%=cid%>);
+    .flatMap(s_<%=cid%> -> s_<%=cid%>.getActions().stream())
+    .filter(actionMeta_<%=cid%> -> "create_connection".equals(actionMeta_<%=cid%>.getType()))
+    .forEach(actionMeta_<%=cid%> -> {
+        Object connnection_<%=cid%> = actionMeta_<%=cid%>.getInvoker().apply(configuration_<%=cid%>);
 
-        globalMap.put("conn_<%=cid%>", connnection);
+        globalMap.put("conn_<%=cid%>", connnection_<%=cid%>);
     });

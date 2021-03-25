@@ -56,31 +56,41 @@ final org.talend.sdk.component.runtime.input.Mapper tempMapper_<%=cid%> = mgr_<%
     .orElseThrow(() -> new IllegalArgumentException("Can't find <%=family%>#<%=originalName%>"));
     
 <%
-//TODO check it after studio add this parameter in ui and model
+//TODO check it after studio add these parameters in ui and model
+boolean useExistedConnection = true;
 String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
 //TODO for test only, remove it later
 connection = "NetSuiteConnection_1";
+if(useExistedConnection) {//}
 %>
 try {
-    java.lang.reflect.Field field = tempMapper_<%=cid%>.getClass().getSuperclass().getDeclaredField("delegate");
-    field.setAccessible(true);
-    Object v = field.get(tempMapper_<%=cid%>);
-    if (v instanceof org.talend.sdk.component.api.context.RuntimeContextInjector) {
-        org.talend.sdk.component.api.context.RuntimeContext runtimeContext = new org.talend.sdk.component.api.context.RuntimeContext() {
+    java.lang.reflect.Field field_<%=cid%> = tempMapper_<%=cid%>.getClass().getSuperclass().getDeclaredField("delegate");
+    field_<%=cid%>.setAccessible(true);
+    Object v_<%=cid%> = field_<%=cid%>.get(tempMapper_<%=cid%>);
+    if (v_<%=cid%> instanceof org.talend.sdk.component.api.context.RuntimeContextInjector) {
+        org.talend.sdk.component.api.context.RuntimeContext runtimeContext_<%=cid%> = new org.talend.sdk.component.api.context.RuntimeContext() {
 
             @Override
             public Object getConnection() {
-                return globalMap.get("conn_<%=connection%>");
+                Object con_<%=cid%> = globalMap.get("conn_<%=connection%>");
+                if(con_<%=cid%>==null) {
+                    throw new RuntimeException("can't find the connection object");
+                }
+                return con_<%=cid%>;
             }
 
         };
 
-        ((org.talend.sdk.component.api.context.RuntimeContextInjector) v).setRuntimeContext(runtimeContext);
+        ((org.talend.sdk.component.api.context.RuntimeContextInjector) v_<%=cid%>).setRuntimeContext(runtimeContext_<%=cid%>);
     }
-    field.setAccessible(false);
-} catch (Exception e) {
-    System.out.println(e);
+    field_<%=cid%>.setAccessible(false);
+} catch (Exception e_<%=cid%>) {
+    System.out.println(e_<%=cid%>);
 }
+<%
+//{
+}
+%>
 
 int nbLineInput_<%=cid%> = 0;
 

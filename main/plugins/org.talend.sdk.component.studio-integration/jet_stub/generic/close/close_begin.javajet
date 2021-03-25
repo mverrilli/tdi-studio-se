@@ -60,21 +60,25 @@ mgr_<%=cid%>.findPlugin("<%=family.toLowerCase()%>")
     .get(org.talend.sdk.component.runtime.manager.ContainerComponentRegistry.class)
     .getServices()
     .stream()
-    .flatMap(c -> c.getActions().stream())
-    .filter(actionMeta -> "closeconnection".equals(actionMeta.getType()))
-    .forEach(actionMeta -> {
-        Object result = actionMeta.getInvoker().apply(null);
-        org.talend.sdk.component.api.service.connection.CloseConnectionObject cco = (org.talend.sdk.component.api.service.connection.CloseConnectionObject) result;
+    .flatMap(s_<%=cid%> -> s_<%=cid%>.getActions().stream())
+    .filter(actionMeta_<%=cid%> -> "close_connection".equals(actionMeta_<%=cid%>.getType()))
+    .forEach(actionMeta_<%=cid%> -> {
+        Object result_<%=cid%> = actionMeta_<%=cid%>.getInvoker().apply(null);
+        org.talend.sdk.component.api.service.connection.CloseConnectionObject cco_<%=cid%> = (org.talend.sdk.component.api.service.connection.CloseConnectionObject) result_<%=cid%>;
 
-        org.talend.sdk.component.api.context.RuntimeContext runtimeContext = new org.talend.sdk.component.api.context.RuntimeContext() {
+        org.talend.sdk.component.api.context.RuntimeContext runtimeContext_<%=cid%> = new org.talend.sdk.component.api.context.RuntimeContext() {
 
             @Override
             public Object getConnection() {
-                return globalMap.get("conn_<%=connection%>");
+                Object con_<%=cid%> = globalMap.get("conn_<%=connection%>");
+                if(con_<%=cid%>==null) {
+                    throw new RuntimeException("can't find the connection object");
+                }
+                return con_<%=cid%>;
             }
 
         };
 
-        cco.setRuntimeContext(runtimeContext);
-        boolean r = cco.close();
+        cco_<%=cid%>.setRuntimeContext(runtimeContext_<%=cid%>);
+        boolean r_<%=cid%> = cco_<%=cid%>.close();
     });
