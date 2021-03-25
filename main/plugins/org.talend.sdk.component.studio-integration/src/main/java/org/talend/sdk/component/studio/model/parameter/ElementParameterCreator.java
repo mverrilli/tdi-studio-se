@@ -22,9 +22,11 @@ import static org.talend.core.model.process.EComponentCategory.BASIC;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.talend.core.PluginChecker;
 import org.talend.core.model.components.ComponentCategory;
 import org.talend.core.model.components.IComponent;
@@ -54,6 +56,10 @@ import org.talend.sdk.studio.process.TaCoKitNode;
  * Creates {@link ComponentModel} {@link ElementParameter} list
  */
 public class ElementParameterCreator {
+
+    private static final String USE_EXISTING_CONNECTION = "USE_EXISTING_CONNECTION";
+
+    private static final String CONNECTION = "CONNECTION";
 
     private final INode node;
 
@@ -92,9 +98,10 @@ public class ElementParameterCreator {
             this.properties = emptyList();
         }
     }
-    
-    public ElementParameterCreator(final ComponentModel component, final ComponentDetail detail, Collection<SimplePropertyDefinition> properties, final INode node,
-            final String reportPath, final boolean isCatcherAvailable) {
+
+    public ElementParameterCreator(final ComponentModel component, final ComponentDetail detail,
+            Collection<SimplePropertyDefinition> properties, final INode node, final String reportPath,
+            final boolean isCatcherAvailable) {
         this.component = component;
         this.detail = detail;
         this.node = node;
@@ -104,11 +111,10 @@ public class ElementParameterCreator {
             this.properties = PropertyDefinitionDecorator.wrap(properties);
         } else if (!detail.getProperties().isEmpty()) {
             this.properties = PropertyDefinitionDecorator.wrap(detail.getProperties());
-        }else {
+        } else {
             this.properties = emptyList();
         }
     }
-    
 
     public List<? extends IElementParameter> createParameters() {
         addCommonParameters();
@@ -121,19 +127,19 @@ public class ElementParameterCreator {
      */
     private void addSettings() {
         if (!properties.isEmpty()) {
-            final PropertyNode root = new PropertyTreeCreator(new WidgetTypeMapper())
-                    .createPropertyTree(properties);
+            final PropertyNode root = new PropertyTreeCreator(new WidgetTypeMapper()).createPropertyTree(properties);
             final SettingVisitor4Component settingVisitor = new SettingVisitor4Component(node, updateComponentsParameter, detail);
-            root.accept(settingVisitor.withCategory(BASIC), Metadatas.MAIN_FORM);
-            root.accept(settingVisitor.withCategory(ADVANCED), Metadatas.ADVANCED_FORM);
+            if (isShowPropertyParameter()) {
+                root.accept(settingVisitor.withCategory(BASIC), Metadatas.MAIN_FORM);
+                root.accept(settingVisitor.withCategory(ADVANCED), Metadatas.ADVANCED_FORM);
+            }
             parameters.addAll(settingVisitor.getSettings());
             addLayoutParameter(root, Metadatas.MAIN_FORM);
             addLayoutParameter(root, Metadatas.ADVANCED_FORM);
             // create config type version param
             properties.stream().filter(p -> p.getConfigurationType() != null && p.getConfigurationTypeName() != null)
-                    .forEach(p -> parameters.add(new VersionParameter(node, p.getPath(),
-                            String.valueOf(TaCoKitUtil.getConfigTypeVersion(p, component.getConfigTypeNodes(),
-                                    component.getId().getFamilyId())))));
+                    .forEach(p -> parameters.add(new VersionParameter(node, p.getPath(), String.valueOf(TaCoKitUtil
+                            .getConfigTypeVersion(p, component.getConfigTypeNodes(), component.getId().getFamilyId())))));
         }
 
         checkSchemaProperties(new SettingVisitor(node, updateComponentsParameter, detail).withCategory(BASIC));
@@ -141,6 +147,38 @@ public class ElementParameterCreator {
 
     private void addLayoutParameter(final PropertyNode root, final String form) {
         final Layout layout = root.getLayout(form);
+        if (TaCoKitUtil.isSupportUseExistConnection(component) && Metadatas.MAIN_FORM.equals(form)) {
+            Level connectionLevel = new Level();
+            connectionLevel.setHeight(1);
+            if (this.isShowPropertyParameter()) {
+                updateParameterForComponentList();
+                Layout useExistConnectionLayout = new Layout(USE_EXISTING_CONNECTION);
+                useExistConnectionLayout.setPosition(1);
+                useExistConnectionLayout.setHeight(1);
+                connectionLevel.getColumns().add(useExistConnectionLayout);
+
+                Layout connectionLayout = new Layout(CONNECTION);
+                connectionLayout.setPosition(2);
+                connectionLayout.setHeight(1);
+                connectionLevel.getColumns().add(connectionLayout);
+            } else {
+                addParameterForClose();
+                Layout connectionLayout = new Layout(CONNECTION);
+                connectionLayout.setPosition(2);
+                connectionLayout.setHeight(1);
+                connectionLevel.getColumns().add(connectionLayout);
+            }
+            int minPoistion = Integer.MAX_VALUE;
+            for (int i = 0; i < layout.getLevels().size(); i++) {
+                Level l = layout.getLevels().get(i);
+                if (minPoistion > l.getPosition()) {
+                    minPoistion = l.getPosition();
+                }
+                l.setPosition(l.getPosition() + 1);
+            }
+            connectionLevel.setPosition(minPoistion);
+            layout.getLevels().add(0, connectionLevel);
+        }
         final EComponentCategory category = Metadatas.MAIN_FORM.equals(form) ? BASIC : ADVANCED;
         final LayoutParameter layoutParameter = new LayoutParameter(node, layout, category);
         parameters.add(layoutParameter);
@@ -230,7 +268,9 @@ public class ElementParameterCreator {
         addHelpParameter();
         addUpdateComponentsParameter();
         addIReportPathParameter();
-        addPropertyParameter();
+        if (isShowPropertyParameter()) {
+            addPropertyParameter();
+        }
         addStatCatcherParameter();
         // following parameters are added only in TIS
         addParallelizeParameter();
@@ -241,9 +281,16 @@ public class ElementParameterCreator {
         addDocParameters();
     }
 
+    private boolean isShowPropertyParameter() {
+        if (this.component instanceof VirtualComponentModel) {
+            return ((VirtualComponentModel) component).isShowPropertyParameter();
+        }
+        return true;
+    }
+
     /**
-     * Creates and adds {@link EParameterName#FAMILY} parameter
-     * This parameter is used during code generation to know which component runtime to use
+     * Creates and adds {@link EParameterName#FAMILY} parameter This parameter is used during code generation to know
+     * which component runtime to use
      */
     private void addFamilyParameter() {
         final ElementParameter parameter = new ElementParameter(node);
@@ -325,8 +372,7 @@ public class ElementParameterCreator {
     }
 
     /**
-     * Creates and adds {@link EParameterName#END_OF_FLOW} parameter
-     * See TUP-4142
+     * Creates and adds {@link EParameterName#END_OF_FLOW} parameter See TUP-4142
      */
     private void addEndOfFlowParameter() {
         final ElementParameter parameter = new ElementParameter(node);
@@ -361,9 +407,67 @@ public class ElementParameterCreator {
         parameters.add(parameter);
     }
 
+    private void addParameterForClose() {
+        final ElementParameter connectionParameter = new ElementParameter(node);
+        connectionParameter.setName(CONNECTION);
+        connectionParameter.setValue("");
+        connectionParameter.setDisplayName("Component List");
+        connectionParameter.setFieldType(EParameterFieldType.COMPONENT_LIST);
+        connectionParameter.setCategory(EComponentCategory.BASIC);
+        connectionParameter.setNumRow(15);
+        connectionParameter.setFilter(VirtualComponentModel.getDefaultConnectionName(component.getIndex()));
+        connectionParameter.setReadOnly(false);
+        connectionParameter.setRequired(false);
+        connectionParameter.setShow(true);
+        parameters.add(connectionParameter);
+    }
+
+    private void updateParameterForComponentList() {
+        Map<String, PropertyDefinitionDecorator> datastoreProperties = TaCoKitUtil
+                .getVirtualComponentDataStoreProperties(component);
+        for (IElementParameter param : parameters) {
+            if (datastoreProperties.containsKey(param.getName()) || datastoreProperties
+                    .containsKey(param.getName().replace("configuration.dataSet.datastore", "configuration"))) {
+                String value = param.getShowIf();
+                if (StringUtils.isEmpty(value)) {
+                    value = "USE_EXISTING_CONNECTION == 'false'";
+                } else {
+                    value = value + " && USE_EXISTING_CONNECTION == 'false'";
+                }
+                param.setShowIf(value);
+            }
+        }
+        final ElementParameter parameter = new ElementParameter(node);
+        parameter.setName(USE_EXISTING_CONNECTION);
+        parameter.setValue(false);
+        parameter.setDisplayName("USE_EXISTING_CONNECTION");
+        parameter.setFieldType(EParameterFieldType.CHECK);
+        parameter.setCategory(EComponentCategory.BASIC);
+        parameter.setNumRow(15);
+        parameter.setReadOnly(false);
+        parameter.setRequired(false);
+        parameter.setShow(true);
+        parameter.setDefaultValue(false);
+        parameters.add(parameter);
+
+        final ElementParameter connectionParameter = new ElementParameter(node);
+        connectionParameter.setName(CONNECTION);
+        connectionParameter.setValue("");
+        connectionParameter.setDisplayName("Component List");
+        connectionParameter.setFieldType(EParameterFieldType.COMPONENT_LIST);
+        connectionParameter.setCategory(EComponentCategory.BASIC);
+        connectionParameter.setNumRow(15);
+        connectionParameter.setFilter(VirtualComponentModel.getDefaultConnectionName(component.getIndex()));
+        connectionParameter.setReadOnly(false);
+        connectionParameter.setRequired(false);
+        connectionParameter.setShow(true);
+        connectionParameter.setDynamicSettings(true);
+        connectionParameter.setShowIf("USE_EXISTING_CONNECTION == 'true'");
+        parameters.add(connectionParameter);
+    }
+
     /**
-     * Creates and adds {@link EParameterName#HELP} parameter
-     * See TUP-4143
+     * Creates and adds {@link EParameterName#HELP} parameter See TUP-4143
      */
     private void addHelpParameter() {
         final ElementParameter parameter = new ElementParameter(node);
@@ -488,8 +592,8 @@ public class ElementParameterCreator {
         return findConfigurationTypes().stream().map(p -> {
             final String configName = p.getConfigurationTypeName();
             final String configType = p.getConfigurationType();
-            final ConfigTypeNode configNode =
-                    Lookups.taCoKitCache().getConfigTypeNode(detail.getId().getFamily(), configName, configType);
+            final ConfigTypeNode configNode = Lookups.taCoKitCache().getConfigTypeNode(detail.getId().getFamily(), configName,
+                    configType);
             if (configNode == null) {
                 return "";
             }
@@ -615,7 +719,7 @@ public class ElementParameterCreator {
         final ElementParameter parameter = new ElementParameter(node);
         parameter.setName(EParameterName.COMPONENT_NAME.getName());
         if (component instanceof VirtualComponentModel) {
-            parameter.setValue(((VirtualComponentModel)component).getComponentName()); 
+            parameter.setValue(((VirtualComponentModel) component).getComponentName());
         } else {
             parameter.setValue(detail.getId().getName());
         }
@@ -629,15 +733,14 @@ public class ElementParameterCreator {
     }
 
     /**
-     * Creates and adds TACOKIT_COMPONENT_ID parameter.
-     * It is used in serialization/deserialization to know whether it is Tacokit component and
-     * to find ComponentDetail quickly
+     * Creates and adds TACOKIT_COMPONENT_ID parameter. It is used in serialization/deserialization to know whether it
+     * is Tacokit component and to find ComponentDetail quickly
      */
     private void addTacokitComponentIdParameter() {
         final ElementParameter parameter = new ElementParameter(node);
         parameter.setName(TaCoKitNode.TACOKIT_COMPONENT_ID);
         if (component instanceof VirtualComponentModel) {
-            parameter.setValue(((VirtualComponentModel)component).getComponentId()); 
+            parameter.setValue(((VirtualComponentModel) component).getComponentId());
         } else {
             parameter.setValue(detail.getId().getId());
         }

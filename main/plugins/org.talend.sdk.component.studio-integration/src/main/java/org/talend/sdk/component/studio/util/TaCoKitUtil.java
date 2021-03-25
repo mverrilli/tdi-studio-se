@@ -21,6 +21,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,6 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.m2e.core.MavenPlugin;
-import org.talend.commons.exception.ExceptionHandler;
 import org.talend.commons.utils.data.container.Container;
 import org.talend.commons.utils.system.EnvironmentUtils;
 import org.talend.core.model.components.ComponentCategory;
@@ -59,11 +59,14 @@ import org.talend.core.ui.component.ComponentsFactoryProvider;
 import org.talend.designer.core.model.utils.emf.talendfile.NodeType;
 import org.talend.designer.core.utils.UnifiedComponentUtil;
 import org.talend.repository.ProjectManager;
+import org.talend.sdk.component.server.front.model.ActionReference;
 import org.talend.sdk.component.server.front.model.ComponentIndex;
 import org.talend.sdk.component.server.front.model.ConfigTypeNode;
 import org.talend.sdk.component.server.front.model.ConfigTypeNodes;
 import org.talend.sdk.component.studio.ComponentModel;
 import org.talend.sdk.component.studio.Lookups;
+import org.talend.sdk.component.studio.VirtualComponentModel;
+import org.talend.sdk.component.studio.VirtualComponentModel.VirtualComponentModelType;
 import org.talend.sdk.component.studio.metadata.TaCoKitCache;
 import org.talend.sdk.component.studio.metadata.WizardRegistry;
 import org.talend.sdk.component.studio.metadata.model.TaCoKitConfigurationModel;
@@ -522,6 +525,37 @@ public class TaCoKitUtil {
      */
     public static boolean hasTaCoKitComponents(final Stream<IComponent> components) {
         return components.anyMatch(ComponentModel.class::isInstance);
+    }
+    
+    public static boolean isSupportUseExistConnection(ComponentModel component) {
+        if (component != null && component.getDetail() != null && component.getDetail().getActions() != null) {
+            boolean isSupport = false;
+            for (ActionReference action: component.getDetail().getActions()) {
+                //if ("CLOSE_CONNECTION".equals(action.getName())) {
+                isSupport = true;
+                break;
+                //}
+            }
+            if (isSupport && component instanceof VirtualComponentModel) {
+                if (((VirtualComponentModel)component).getModelType() == VirtualComponentModelType.CONNECTION) {
+                    isSupport = false;
+                }
+            }
+            return isSupport;
+        }
+        return false;
+    }
+    
+    public static Map<String, PropertyDefinitionDecorator> getVirtualComponentDataStoreProperties(ComponentModel component) {
+        final Map<String, PropertyDefinitionDecorator> tree = new HashMap<>();
+        TaCoKitCache cache = Lookups.taCoKitCache();
+        ConfigTypeNode configTypeNode = cache.findConfigTypeNodeById(component.getDetail().getId().getFamily(), "datastore");
+        if (configTypeNode != null && configTypeNode.getProperties() != null) {
+            final Collection<PropertyDefinitionDecorator> properties = PropertyDefinitionDecorator
+                    .wrap(configTypeNode.getProperties());
+            properties.forEach(p -> tree.put(p.getPath(), p));
+        }
+        return tree;
     }
 
     public static void checkM2TacokitStatus() throws Exception {

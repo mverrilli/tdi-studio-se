@@ -68,21 +68,4 @@ public class VirtualComponentRegister {
         }
         return null;
     }
-
-    public Map<String, PropertyDefinitionDecorator> getVirtualComponentProperties(String componentName) {
-        if (VIRTUAL_COMPONENT_NAME_CACHE.containsKey(componentName)) {
-            final Map<String, PropertyDefinitionDecorator> tree = new HashMap<>();
-            VirtualComponentModel component = VIRTUAL_COMPONENT_NAME_CACHE.get(componentName);
-            TaCoKitCache cache = Lookups.taCoKitCache();
-            ConfigTypeNode configTypeNode = cache.findConfigTypeNodeById(component.getDetail().getId().getFamily(), "datastore");
-            if (configTypeNode != null && configTypeNode.getProperties() != null) {
-                final Collection<PropertyDefinitionDecorator> properties = PropertyDefinitionDecorator
-                        .wrap(configTypeNode.getProperties());
-                properties.forEach(p -> tree.put(p.getPath(), p));
-            }
-            return tree;
-        }
-        return null;
-    }
-
 }

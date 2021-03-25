@@ -115,6 +115,13 @@ public class VirtualComponentModel extends ComponentModel {
     public String getComponentId() {
         return detail.getId().getId() + this.modelType.getDisplayName();
     }
+    
+    public static String getDefaultConnectionName(ComponentIndex index) {
+        if (TaCoKitUtil.isTaCoKitComponentMadeByTalend(index)) {
+            return "t" + TaCoKitUtil.getFullComponentName(index.getId().getFamily(), VirtualComponentModelType.CONNECTION.getDisplayName());
+        }
+        return TaCoKitUtil.getFullComponentName(index.getId().getFamily(), VirtualComponentModelType.CONNECTION.getDisplayName());
+    }
 
     public enum VirtualComponentModelType {
         CONNECTION("Connection"),

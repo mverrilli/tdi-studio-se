@@ -708,4 +708,8 @@ public class ComponentModel extends AbstractBasicComponent implements IAdditiona
         return detail;
     }
 
+    public ComponentIndex getIndex() {
+        return index;
+    }
+
 }
