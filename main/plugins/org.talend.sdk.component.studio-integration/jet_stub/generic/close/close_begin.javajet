@@ -48,7 +48,12 @@ if (mgr_<%=cid%>.getContainer().findAll().isEmpty()) {
     mgr_<%=cid%>.autoDiscoverPlugins(false, true);
 }
 
-<%@include file="../configuration.javajet"%>
+<%
+//TODO check it after studio add this parameter in ui and model
+String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
+//TODO for test only, remove it later
+connection = "NetSuiteConnection_1";
+%>
 
 mgr_<%=cid%>.findPlugin("<%=family.toLowerCase()%>")
     .get()
@@ -56,9 +61,24 @@ mgr_<%=cid%>.findPlugin("<%=family.toLowerCase()%>")
     .getServices()
     .stream()
     .flatMap(s_<%=cid%> -> s_<%=cid%>.getActions().stream())
-    .filter(actionMeta_<%=cid%> -> "create_connection".equals(actionMeta_<%=cid%>.getType()))
+    .filter(actionMeta_<%=cid%> -> "close_connection".equals(actionMeta_<%=cid%>.getType()))
     .forEach(actionMeta_<%=cid%> -> {
-        Object connnection_<%=cid%> = actionMeta_<%=cid%>.getInvoker().apply(configuration_<%=cid%>);
+        Object result_<%=cid%> = actionMeta_<%=cid%>.getInvoker().apply(null);
+        org.talend.sdk.component.api.service.connection.CloseConnectionObject cco_<%=cid%> = (org.talend.sdk.component.api.service.connection.CloseConnectionObject) result_<%=cid%>;
 
-        globalMap.put("conn_<%=cid%>", connnection_<%=cid%>);
+        org.talend.sdk.component.api.context.RuntimeContext runtimeContext_<%=cid%> = new org.talend.sdk.component.api.context.RuntimeContext() {
+
+            @Override
+            public Object getConnection() {
+                Object con_<%=cid%> = globalMap.get("conn_<%=connection%>");
+                if(con_<%=cid%>==null) {
+                    throw new RuntimeException("can't find the connection object");
+                }
+                return con_<%=cid%>;
+            }
+
+        };
+
+        cco_<%=cid%>.setRuntimeContext(runtimeContext_<%=cid%>);
+        boolean r_<%=cid%> = cco_<%=cid%>.close();
     });

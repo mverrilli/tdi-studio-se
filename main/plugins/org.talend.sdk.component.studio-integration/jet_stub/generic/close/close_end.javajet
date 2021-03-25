@@ -42,38 +42,3 @@ final String originalName = (String)node.getElementParameter(EParameterName.COMP
 final String family = (String)node.getElementParameter(EParameterName.FAMILY.getName()).getValue();
 final String version = (String)node.getElementParameter(EParameterName.VERSION.getName()).getValue();
 %>
-
-final org.talend.sdk.component.runtime.manager.ComponentManager mgr_<%=cid%> = org.talend.sdk.component.runtime.manager.ComponentManager.instance();
-if (mgr_<%=cid%>.getContainer().findAll().isEmpty()) {
-    mgr_<%=cid%>.autoDiscoverPlugins(false, true);
-}
-
-<%
-//TODO check it
-String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
-%>
-
-//TODO how to get the plugin, what's the right key?
-mgr_<%=cid%>.findPlugin("test-classes")
-    .get()
-    .get(org.talend.sdk.component.runtime.manager.ContainerComponentRegistry.class)
-    .getServices()
-    .stream()
-    .flatMap(c -> c.getActions().stream())
-    .filter(actionMeta -> "closeconnection".equals(actionMeta.getType()))
-    .forEach(actionMeta -> {
-        Object result = actionMeta.getInvoker().apply(null);
-        org.talend.sdk.component.api.service.connection.CloseConnectionObject cco = (org.talend.sdk.component.api.service.connection.CloseConnectionObject) result;
-
-        org.talend.sdk.component.api.context.RuntimeContext runtimeContext = new org.talend.sdk.component.api.context.RuntimeContext() {
-
-            @Override
-            public Object getConnection() {
-                return globalMap.get("conn_<%=connection%>");
-            }
-
-        };
-
-        cco.setRuntimeContext(runtimeContext);
-        boolean r = cco.close();
-    });
