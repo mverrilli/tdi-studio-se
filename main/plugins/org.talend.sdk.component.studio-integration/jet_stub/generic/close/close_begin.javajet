@@ -49,10 +49,7 @@ if (mgr_<%=cid%>.getContainer().findAll().isEmpty()) {
 }
 
 <%
-//TODO check it after studio add this parameter in ui and model
 String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
-//TODO for test only, remove it later
-connection = "NetSuiteConnection_1";
 %>
 
 mgr_<%=cid%>.findPlugin("<%=family.toLowerCase()%>")
