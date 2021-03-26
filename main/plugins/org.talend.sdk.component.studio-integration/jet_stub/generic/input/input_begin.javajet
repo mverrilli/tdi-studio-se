@@ -56,7 +56,7 @@ final org.talend.sdk.component.runtime.input.Mapper tempMapper_<%=cid%> = mgr_<%
     .orElseThrow(() -> new IllegalArgumentException("Can't find <%=family%>#<%=originalName%>"));
     
 <%
-String useExistedConnection = ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__");
+boolean useExistedConnection = "true".equals(ElementParameterParser.getValue(node,"__USE_EXISTING_CONNECTION__"));
 String connection = ElementParameterParser.getValue(node,"__CONNECTION__");
 if(useExistedConnection) {//}
 %>
