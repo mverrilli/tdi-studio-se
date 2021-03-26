@@ -52,6 +52,7 @@ import org.talend.sdk.component.server.front.model.ConfigTypeNode;
 import org.talend.sdk.component.studio.ComponentModel;
 import org.talend.sdk.component.studio.Lookups;
 import org.talend.sdk.component.studio.TaCoKitGenericProvider;
+import org.talend.sdk.component.studio.VirtualComponentRegister;
 import org.talend.sdk.component.studio.metadata.model.TaCoKitConfigurationModel;
 import org.talend.sdk.component.studio.metadata.model.TaCoKitConfigurationModel.ValueModel;
 import org.talend.sdk.component.studio.metadata.node.ITaCoKitRepositoryNode;
@@ -137,7 +138,7 @@ public class TaCoKitDragAndDropHandler extends AbstractDragAndDropServiceHandler
      * @throws Exception Exception should be handled by ExceptionHandler
      */
     private String computeKey(final TaCoKitConfigurationModel model, String parameterId, String component) throws Exception {
-        if (TaCoKitGenericProvider.isVirtualComponent(component)) {
+        if (VirtualComponentRegister.getInstance().isVirtualComponentName(component)) {
             return parameterId;
         } else {
             final Map<String, PropertyDefinitionDecorator> tree = retrieveProperties(component);
