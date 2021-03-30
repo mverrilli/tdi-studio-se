@@ -164,10 +164,12 @@ accessCtrlList.grantPermission(grantee_<%=cid%>_<%=grantee_id%>, com.amazonaws.s
 			<%}%>
 
 			<%if (enableObjectLock) {%>
-				java.util.Date retention_date_<%=cid%> = java.util.Date.from(java.time.LocalDate.now().plusDays(<%=objectLockRetention%>).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
-			
-				putRequest_<%=cid%>.withObjectLockMode(com.amazonaws.services.s3.model.ObjectLockMode.<%=objectLockMode%>)
-					.withObjectLockRetainUntilDate(retention_date_<%=cid%>);
+				{
+					final java.util.Date retention_date_<%=cid%> = java.util.Date.from(java.time.LocalDate.now().plusDays(<%=objectLockRetention%>).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+
+					putRequest_<%=cid%>.withObjectLockMode(com.amazonaws.services.s3.model.ObjectLockMode.<%=objectLockMode%>)
+						.withObjectLockRetainUntilDate(retention_date_<%=cid%>);
+				}
 			<%}%>
 
   			<%@ include file="./set_kms.javajet"%>
@@ -214,10 +216,12 @@ accessCtrlList.grantPermission(grantee_<%=cid%>_<%=grantee_id%>, com.amazonaws.s
 				         }
 			        <%}%>
 					<%if (enableObjectLock) {%>
-						java.util.Date retention_date_<%=cid%> = java.util.Date.from(java.time.LocalDate.now().plusDays(<%=objectLockRetention%>).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
-					
-						putRequest_<%=cid%>.withObjectLockMode(com.amazonaws.services.s3.model.ObjectLockMode.<%=objectLockMode%>)
-							.withObjectLockRetainUntilDate(retention_date_<%=cid%>);
+						{
+							final java.util.Date retention_date_<%=cid%> = java.util.Date.from(java.time.LocalDate.now().plusDays(<%=objectLockRetention%>).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+
+							putRequest_<%=cid%>.withObjectLockMode(com.amazonaws.services.s3.model.ObjectLockMode.<%=objectLockMode%>)
+								.withObjectLockRetainUntilDate(retention_date_<%=cid%>);
+						}
 					<%}%>
 
     				<%@ include file="./set_kms.javajet"%>
@@ -241,10 +245,12 @@ accessCtrlList.grantPermission(grantee_<%=cid%>_<%=grantee_id%>, com.amazonaws.s
 			    <%}%>
 
 				<%if (enableObjectLock) {%>
-					java.util.Date retention_date_<%=cid%> = java.util.Date.from(java.time.LocalDate.now().plusDays(<%=objectLockRetention%>).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
-				
-					putRequest_<%=cid%>.withObjectLockMode(com.amazonaws.services.s3.model.ObjectLockMode.<%=objectLockMode%>)
-						.withObjectLockRetainUntilDate(retention_date_<%=cid%>);
+					{
+						final java.util.Date retention_date_<%=cid%> = java.util.Date.from(java.time.LocalDate.now().plusDays(<%=objectLockRetention%>).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant());
+
+						putRequest_<%=cid%>.withObjectLockMode(com.amazonaws.services.s3.model.ObjectLockMode.<%=objectLockMode%>)
+							.withObjectLockRetainUntilDate(retention_date_<%=cid%>);
+					}
 				<%}%>
 
       			<%@ include file="./set_kms.javajet"%>
